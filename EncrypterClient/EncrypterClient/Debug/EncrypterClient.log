@@ -1,0 +1,11 @@
+﻿  ClientPackagesHandler.c
+c:\workspace\cercc\encrypter\encrypterclient\encrypterclient\clientpackageshandler.c(15): warning C4996: 'wcscpy': This function or variable may be unsafe. Consider using wcscpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  c:\program files (x86)\windows kits\10\include\10.0.10240.0\ucrt\corecrt_wstring.h(121): note: see declaration of 'wcscpy'
+c:\workspace\cercc\encrypter\encrypterclient\encrypterclient\clientpackageshandler.c(16): warning C4996: 'wcscpy': This function or variable may be unsafe. Consider using wcscpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  c:\program files (x86)\windows kits\10\include\10.0.10240.0\ucrt\corecrt_wstring.h(121): note: see declaration of 'wcscpy'
+c:\workspace\cercc\encrypter\encrypterclient\encrypterclient\clientpackageshandler.c(25): warning C4996: 'wcscpy': This function or variable may be unsafe. Consider using wcscpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  c:\program files (x86)\windows kits\10\include\10.0.10240.0\ucrt\corecrt_wstring.h(121): note: see declaration of 'wcscpy'
+c:\workspace\cercc\encrypter\encrypterclient\encrypterclient\clientpackageshandler.c(31): warning C4101: 'requestAnswerVal': unreferenced local variable
+c:\workspace\cercc\encrypter\encrypterclient\encrypterclient\clientpackageshandler.c(35): warning C4101: 'packageToBeSend': unreferenced local variable
+  EncrypterClient.vcxproj -> C:\Workspace\CercC\Encrypter\EncrypterClient\Debug\EncrypterClient.exe
+  EncrypterClient.vcxproj -> C:\Workspace\CercC\Encrypter\EncrypterClient\Debug\EncrypterClient.pdb (Full PDB)
