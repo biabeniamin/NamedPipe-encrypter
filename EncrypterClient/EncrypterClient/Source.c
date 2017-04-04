@@ -13,5 +13,6 @@ int main(void)
 	
 	authenticateConnection(TEXT("username"), TEXT("password"));
 	encryptData( TEXT("Ana are mere de vanzare"));
+	closeCommunication();
 	return (0);
 }

@@ -10,3 +10,5 @@ void
 authenticateConnection(PTCHAR username, PTCHAR password);
 void 
 encryptData(PTCHAR text);
+void
+closeCommunication();

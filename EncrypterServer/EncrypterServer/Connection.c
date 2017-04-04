@@ -22,6 +22,8 @@ DWORD getBufferSizeForType(packageType type)
 	case encryptionResponse:
 		octetsToBeWritted = sizeof(encryptionResponseValues);
 		break;
+	case closing:
+		octetsToBeWritted = sizeof(package)+2*sizeof(TCHAR);
 	}
 	return octetsToBeWritted;
 }

@@ -6,3 +6,7 @@ Debug/
 *.cache
 EncrypterClient/Debug/EncrypterClient.exe
 EncrypterClient/EncrypterClient/Debug/*
+EncrypterClient/EncrypterClient.VC.db
+EncrypterClient/EncrypterClient.VC.VC.opendb
+EncrypterServer/EncrypterServer.VC.db
+EncrypterServer/EncrypterServer.VC.VC.opendb

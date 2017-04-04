@@ -37,6 +37,14 @@ void encryptData(PTCHAR text)
 	writePackage(h, &p);
 	waitAnswer(response, &packageReceived);
 }
+void closeCommunication()
+{
+	package p;
+	p.type = closing;
+	TCHAR buf[] = TEXT("");
+	p.buffer = &buf;
+	writePackage(h, &p);
+}
 int packageReceived(package *pack)
 {
 	requestAnswerValues *requestAnswerVal;

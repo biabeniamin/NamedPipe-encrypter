@@ -1,6 +1,7 @@
 #include "PackagesHandler.h"
 #include "Connection.h"
 #include "Encryptor.h"
+DWORD threadCount = 0;
 BOOL authenticateClient(authenticationValues *authValues)
 {
 	if (_tccmp(authValues->username, TEXT("username")) == 0
@@ -10,23 +11,27 @@ BOOL authenticateClient(authenticationValues *authValues)
 }
 DWORD WINAPI ClientThread(PVOID pipeName)
 {
-	HANDLE hPipe = initializingPipeAsServer(TEXT("\\\\.\\pipe\\PipeThS"));
-	TCHAR clientPipeName[] = TEXT("\\\\.\\pipe\\PipeThC");
-	initializingServer(hPipe, clientPipeName, &packageReceived);
-	
+	pipeNameConnection *pipeNameC = pipeName;
+	HANDLE hPipe = initializingPipeAsServer(pipeNameC->serverPipeName);
+	initializingServer(hPipe, pipeNameC->clientPipeName, &packageReceived);
+	free(pipeName);
 }
 void clientAuthenticated(package *pack, HANDLE responsePipe)
 {
-	HANDLE thread = CreateThread(NULL, 0, ClientThread, NULL, 0, NULL);
+	pipeNameConnection *pipeName=malloc(sizeof(pipeNameConnection));
+	_tcscpy(pipeName->serverPipeName, TEXT("\\\\.\\pipe\\PipeThXS"));
+	_tcscpy(pipeName->clientPipeName, TEXT("\\\\.\\pipe\\PipeThXC"));
+	pipeName->serverPipeName[15] = threadCount + 97;
+	pipeName->clientPipeName[15] = threadCount + 97;
+	threadCount++;
+	HANDLE thread = CreateThread(NULL, 0, ClientThread,pipeName, 0, NULL);
 	Sleep(10);
 	authenticationResponseValues authResponse;
 	package packageToBeSend;
-	TCHAR serverPipeName[] = TEXT("\\\\.\\pipe\\PipeThS");
-	TCHAR clientPipeName[] = TEXT("\\\\.\\pipe\\PipeThC");
 	packageToBeSend.type = authenticationResponse;
 	authResponse.isSuccessful = 1;
-	_tcscpy(authResponse.serverPipename, serverPipeName);
-	_tcscpy(authResponse.clientPipename, clientPipeName);
+	_tcscpy(authResponse.serverPipename, pipeName->serverPipeName);
+	_tcscpy(authResponse.clientPipename, pipeName->clientPipeName);
 	packageToBeSend.buffer = &authResponse;
 	writePackage(responsePipe, &packageToBeSend);
 }
@@ -79,6 +84,11 @@ int packageReceived(package *pack,HANDLE responsePipe)
 		_tcscpy(encResponseValues.buffer, encValues->buffer);
 		packageToBeSend.buffer = &encResponseValues;
 		writePackage(responsePipe, &packageToBeSend);
+		break;
+	case closing:
+		_tprintf(TEXT("Connection closed"));
+		return 1;
 	}
+	free(pack->buffer);
 	return 0;
 }
