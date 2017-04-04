@@ -1,11 +1,13 @@
 #include "ClientPackagesHandler.h"
 HANDLE h;
 HANDLE response;
+int isOpen = 0;
 void initializingCommunication()
 {
 	h = initializingPipeAsClient(TEXT("\\\\.\\pipe\\Pipe"));
 	response = initializingPipeAsServer(TEXT("\\\\.\\pipe\\PipeA"));
 	ConnectNamedPipe(response,NULL);
+	isOpen = 1;
 }
 void initializingConnection()
 {
@@ -13,8 +15,11 @@ void initializingConnection()
 	package p;
 	p.type = initializing;
 	p.buffer = malloc(1);
-	writePackage(h, &p);
-	waitAnswer(response,&packageReceived);
+	if (isOpen)
+	{
+		writePackage(h, &p);
+		waitAnswer(response, &packageReceived);
+	}
 }
 void authenticateConnection(PTCHAR username, PTCHAR password)
 {
@@ -24,8 +29,11 @@ void authenticateConnection(PTCHAR username, PTCHAR password)
 	_tcscpy(authVal.username, username);
 	_tcscpy(authVal.password, password);
 	p.buffer = &authVal;
-	writePackage(h, &p);
-	waitAnswer(response, &packageReceived);
+	if (isOpen)
+	{
+		writePackage(h, &p);
+		waitAnswer(response, &packageReceived);
+	}
 }
 void encryptData(PTCHAR text)
 {
@@ -34,8 +42,11 @@ void encryptData(PTCHAR text)
 	p.type = encryption;
 	_tcscpy(data.buffer, text);
 	p.buffer = &data;
-	writePackage(h, &p);
-	waitAnswer(response, &packageReceived);
+	if (isOpen)
+	{
+		writePackage(h, &p);
+		waitAnswer(response, &packageReceived);
+	}
 }
 void closeCommunication()
 {
@@ -43,7 +54,14 @@ void closeCommunication()
 	p.type = closing;
 	TCHAR buf[] = TEXT("");
 	p.buffer = &buf;
-	writePackage(h, &p);
+	if(isOpen)
+		writePackage(h, &p);
+}
+void closePipes()
+{
+	DisconnectNamedPipe(h);
+	DisconnectNamedPipe(response);
+	isOpen = 0;
 }
 int packageReceived(package *pack)
 {
@@ -58,7 +76,10 @@ int packageReceived(package *pack)
 		initVal = pack->buffer;
 		_tprintf(TEXT("%d is succesful %d\n"), pack->type,initVal->isAccepted);
 		if (initVal->isAccepted == 0)
+		{
+			closePipes();
 			return 1;
+		}
 		break;
 
 	case authenticationResponse:
