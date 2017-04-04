@@ -7,6 +7,7 @@
 int main(void)
 {
 	HANDLE hPipe =initializingPipeAsServer(TEXT("\\\\.\\pipe\\Pipe"));
-	initializingServer(hPipe,&packageReceived);
+	TCHAR clientPipeName[] = TEXT("\\\\.\\pipe\\PipeA");
+	initializingServer(hPipe, clientPipeName,&packageReceived);
 	return 0;
 }

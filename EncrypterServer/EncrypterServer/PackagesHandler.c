@@ -10,18 +10,23 @@ BOOL authenticateClient(authenticationValues *authValues)
 }
 DWORD WINAPI ClientThread(PVOID pipeName)
 {
-
+	HANDLE hPipe = initializingPipeAsServer(TEXT("\\\\.\\pipe\\PipeThS"));
+	TCHAR clientPipeName[] = TEXT("\\\\.\\pipe\\PipeThC");
+	initializingServer(hPipe, clientPipeName, &packageReceived);
+	
 }
 void clientAuthenticated(package *pack, HANDLE responsePipe)
 {
-	//HANDLE thread = CreateThread(NULL, 0, ClientThread, NULL, 0, NULL);
+	HANDLE thread = CreateThread(NULL, 0, ClientThread, NULL, 0, NULL);
+	Sleep(10);
 	authenticationResponseValues authResponse;
 	package packageToBeSend;
-	TCHAR pipeName[] = TEXT("\\\\.\\pipe\\PipeB");
+	TCHAR serverPipeName[] = TEXT("\\\\.\\pipe\\PipeThS");
+	TCHAR clientPipeName[] = TEXT("\\\\.\\pipe\\PipeThC");
 	packageToBeSend.type = authenticationResponse;
 	authResponse.isSuccessful = 1;
-	_tcscpy(authResponse.pipename, pipeName);
-	authResponse.pipeNameLenght = _tcslen(pipeName);
+	_tcscpy(authResponse.serverPipename, serverPipeName);
+	_tcscpy(authResponse.clientPipename, clientPipeName);
 	packageToBeSend.buffer = &authResponse;
 	writePackage(responsePipe, &packageToBeSend);
 }

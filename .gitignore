@@ -1,0 +1,8 @@
+Debug/
+*.log
+*.pdb
+*.pdb
+*.obj
+*.cache
+EncrypterClient/Debug/EncrypterClient.exe
+EncrypterClient/EncrypterClient/Debug/*

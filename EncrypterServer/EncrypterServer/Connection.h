@@ -14,4 +14,4 @@ readPackage(HANDLE hPipe, package *pack);
 void
 waitAnswer(HANDLE hPipe, int(*packageReceived)(package*));
 void 
-initializingServer(HANDLE, int (*packageReceived)(package*, HANDLE));//returns 0 when the connection will be closed,0 otherwise
+initializingServer(HANDLE,PTCHAR, int (*packageReceived)(package*, HANDLE));//returns 0 when the connection will be closed,0 otherwise

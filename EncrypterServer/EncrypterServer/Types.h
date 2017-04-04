@@ -37,8 +37,8 @@ typedef struct
 } encryptionResponseValues;
 typedef struct
 {
-	DWORD pipeNameLenght;
-	TCHAR pipename[1000];
+	TCHAR serverPipename[1000];
+	TCHAR clientPipename[1000];
 	DWORD isSuccessful;
 } authenticationResponseValues;
 typedef struct

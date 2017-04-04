@@ -101,7 +101,7 @@ void waitAnswer(HANDLE hPipe, int(*packageReceived)(package*))
 
 	
 }
-void initializingServer(HANDLE hPipe, int(*packageReceived)(package*, HANDLE))
+void initializingServer(HANDLE hPipe,PTCHAR tClientPipeName, int(*packageReceived)(package*, HANDLE))
 {
 	package p;
 	DWORD dwRead;
@@ -114,7 +114,7 @@ void initializingServer(HANDLE hPipe, int(*packageReceived)(package*, HANDLE))
 		{
 			do
 			{
-				responsePipe = initializingPipeAsClient(TEXT("\\\\.\\pipe\\PipeA"));
+				responsePipe = initializingPipeAsClient(tClientPipeName);
 			} while (responsePipe ==-1);
 			while (readPackage(hPipe, &p) != FALSE && !isServerClosed)
 			{

@@ -7,14 +7,11 @@
 #include "..\\..\\EncrypterServer\\EncrypterServer\\Connection.h"
 int main(void)
 {
-	HANDLE h = initializingPipeAsClient(TEXT("\\\\.\\pipe\\Pipe"));
-	HANDLE response = initializingPipeAsServer(TEXT("\\\\.\\pipe\\PipeA"));
-	ConnectNamedPipe(response, NULL);
-	initializingConnection(h);
-	waitAnswer(response, &packageReceived);
-	authenticateConnection(h,TEXT("username"), TEXT("password"));
-	waitAnswer(response, &packageReceived);
-	encryptData(h, TEXT("Ana are mere de vanzare"));
-	waitAnswer(response, &packageReceived);
+	initializingCommunication();
+	
+	initializingConnection();
+	
+	authenticateConnection(TEXT("username"), TEXT("password"));
+	encryptData( TEXT("Ana are mere de vanzare"));
 	return (0);
 }
