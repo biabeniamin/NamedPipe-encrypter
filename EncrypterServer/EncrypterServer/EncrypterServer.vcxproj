@@ -153,6 +153,9 @@
     <ClInclude Include="PackagesHandler.h" />
     <ClInclude Include="Types.h" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="StopFlag.txt" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

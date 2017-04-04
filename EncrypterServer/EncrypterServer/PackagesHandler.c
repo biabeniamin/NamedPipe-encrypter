@@ -35,6 +35,31 @@ void clientAuthenticated(package *pack, HANDLE responsePipe)
 	packageToBeSend.buffer = &authResponse;
 	writePackage(responsePipe, &packageToBeSend);
 }
+int isServerRunning()
+{
+	HANDLE hFile = CreateFile(
+		TEXT("StopFlag.txt"),
+		GENERIC_READ,
+		FILE_SHARE_WRITE,
+		NULL,
+		OPEN_EXISTING,
+		FILE_ATTRIBUTE_NORMAL,
+		NULL
+	);
+	int isStopped = 0;
+	DWORD bytesReaded;
+	ReadFile(
+		hFile,
+		&isStopped,
+		sizeof(char),
+		&bytesReaded,
+		NULL);
+	isStopped -= 48;
+	CloseHandle(hFile);
+	if (isStopped == 0)
+		return 1;
+	return 0;
+}
 int packageReceived(package *pack,HANDLE responsePipe)
 {
 	authenticationValues *authenticationVal;
@@ -49,7 +74,7 @@ int packageReceived(package *pack,HANDLE responsePipe)
 	case initializing:
 		_tprintf(TEXT("%d \n"), pack->type);
 		packageToBeSend.type = initializingResponse;
-		initValues.isAccepted = 1;
+		initValues.isAccepted = isServerRunning();
 		packageToBeSend.buffer = &initValues;
 		writePackage(responsePipe, &packageToBeSend);
 		break;

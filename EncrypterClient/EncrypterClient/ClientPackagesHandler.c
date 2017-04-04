@@ -57,8 +57,8 @@ int packageReceived(package *pack)
 	case initializingResponse:
 		initVal = pack->buffer;
 		_tprintf(TEXT("%d is succesful %d\n"), pack->type,initVal->isAccepted);
-		//if (initVal->isAccepted == 0)
-		return 1;
+		if (initVal->isAccepted == 0)
+			return 1;
 		break;
 
 	case authenticationResponse:
