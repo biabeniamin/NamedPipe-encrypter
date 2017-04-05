@@ -1,6 +1,9 @@
 #include "PackagesHandler.h"
 #include "Connection.h"
 #include "Encryptor.h"
+#define MAX_CLIENTS 10
+#define TIMEOUT 5
+HANDLE threads[MAX_CLIENTS];
 DWORD threadCount = 0;
 BOOL authenticateClient(authenticationValues *authValues)
 {
@@ -21,10 +24,10 @@ void clientAuthenticated(package *pack, HANDLE responsePipe)
 	pipeNameConnection *pipeName=malloc(sizeof(pipeNameConnection));
 	_tcscpy(pipeName->serverPipeName, TEXT("\\\\.\\pipe\\PipeThXS"));
 	_tcscpy(pipeName->clientPipeName, TEXT("\\\\.\\pipe\\PipeThXC"));
-	pipeName->serverPipeName[15] = threadCount + 97;
-	pipeName->clientPipeName[15] = threadCount + 97;
-	threadCount++;
-	HANDLE thread = CreateThread(NULL, 0, ClientThread,pipeName, 0, NULL);
+	int threadId = getThreadId();
+	pipeName->serverPipeName[15] = threadId + 97;
+	pipeName->clientPipeName[15] = threadId + 97;
+	threads[threadId] = CreateThread(NULL, 0, ClientThread,pipeName, 0, NULL);
 	Sleep(10);
 	authenticationResponseValues authResponse;
 	package packageToBeSend;
@@ -60,6 +63,26 @@ int isServerRunning()
 		return 1;
 	return 0;
 }
+int getThreadId()
+{
+	if (threadCount >= MAX_CLIENTS)
+	{
+		for (int i = 0; i < MAX_CLIENTS; i++)
+		{
+			DWORD status;
+			GetExitCodeThread(threads[i], &status);
+			if (status != STILL_ACTIVE)
+				return i;
+
+		}
+	}
+	else
+	{
+		return threadCount;
+		threadCount++;
+	}
+	return -1;
+}
 int packageReceived(package *pack,HANDLE responsePipe)
 {
 	authenticationValues *authenticationVal;
@@ -75,6 +98,10 @@ int packageReceived(package *pack,HANDLE responsePipe)
 		_tprintf(TEXT("%d \n"), pack->type);
 		packageToBeSend.type = initializingResponse;
 		initValues.isAccepted = isServerRunning();
+		if (getThreadId() == -1)
+			initValues.isAccepted = 0;
+		if (initValues.isAccepted == 0)
+			_tprintf(TEXT("Connection was denied!\n"));
 		packageToBeSend.buffer = &initValues;
 		writePackage(responsePipe, &packageToBeSend);
 		break;

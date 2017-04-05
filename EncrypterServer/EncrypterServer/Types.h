@@ -51,4 +51,5 @@ typedef struct
 	TCHAR serverPipeName[100];
 	TCHAR clientPipeName[100];
 } pipeNameConnection;
+
 #endif // TYPES_H_INCLUDED
