@@ -11,3 +11,7 @@ EncrypterClient/EncrypterClient.VC.VC.opendb
 EncrypterServer/EncrypterServer.VC.db
 EncrypterServer/EncrypterServer.VC.VC.opendb
 EncrypterServer/EncrypterServer/~AutoRecover.EncrypterServer.vcxproj
+EncrypterClient/EncrypterClient/EncrypterClient.vcxproj
+EncrypterClient/EncrypterClient/EncrypterClient.vcxproj.filters
+EncrypterServer/EncrypterServer/EncrypterServer.vcxproj
+EncrypterServer/EncrypterServer/EncrypterServer.vcxproj.filters

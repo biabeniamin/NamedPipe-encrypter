@@ -9,7 +9,7 @@ void encrypt(PTCHAR username,PTCHAR password,PTCHAR text)
 {
 	initializingCommunication();
 	initializingConnection();
-	authenticateConnection(TEXT("username"), TEXT("password"));
-	encryptData(TEXT("Ana are mere de vanzare"));
+	authenticateConnection(username, password);
+	encryptData(text);
 	closeCommunication();
 }
