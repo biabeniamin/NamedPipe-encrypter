@@ -3,5 +3,5 @@
 #include <tchar.h>
 #include<string.h>
 #include "Types.h"
-int
-packageReceived(package *pack, HANDLE responsePipe);
+void
+initializingCommunication();

@@ -53,6 +53,7 @@ HANDLE initializingPipeAsServer(PTCHAR pipeName)
 		1024 * 16,
 		NMPWAIT_USE_DEFAULT_WAIT,
 		NULL);
+	DWORD error = GetLastError();
 	return hPipe;
 }
 HANDLE initializingPipeAsClient(PTCHAR pipeName)
@@ -130,5 +131,8 @@ void initializingServer(HANDLE hPipe,PTCHAR tClientPipeName, int(*packageReceive
 		}
 
 		DisconnectNamedPipe(hPipe);
+		DisconnectNamedPipe(responsePipe);
+		
 	}
+	CloseHandle(hPipe);
 }

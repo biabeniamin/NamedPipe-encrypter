@@ -1,10 +1,17 @@
-#include "PackagesHandler.h"
+#include "ServerPackagesHandler.h"
 #include "Connection.h"
 #include "Encryptor.h"
 #define MAX_CLIENTS 10
 #define TIMEOUT 5
 HANDLE threads[MAX_CLIENTS];
 DWORD threadCount = 0;
+int packageReceived(package *pack, HANDLE responsePipe);
+void initializingCommunication()
+{
+	HANDLE hPipe = initializingPipeAsServer(TEXT("\\\\.\\pipe\\Pipe"));
+	TCHAR clientPipeName[] = TEXT("\\\\.\\pipe\\PipeA");
+	initializingServer(hPipe, clientPipeName, &packageReceived);
+}
 BOOL authenticateClient(authenticationValues *authValues)
 {
 	if (_tccmp(authValues->username, TEXT("username")) == 0
@@ -27,14 +34,14 @@ void clientAuthenticated(package *pack, HANDLE responsePipe)
 	int threadId = getThreadId();
 	pipeName->serverPipeName[15] = threadId + 97;
 	pipeName->clientPipeName[15] = threadId + 97;
+	authenticationResponseValues authResponse;
+	_tcscpy(authResponse.serverPipename, pipeName->serverPipeName);
+	_tcscpy(authResponse.clientPipename, pipeName->clientPipeName);
 	threads[threadId] = CreateThread(NULL, 0, ClientThread,pipeName, 0, NULL);
 	Sleep(10);
-	authenticationResponseValues authResponse;
 	package packageToBeSend;
 	packageToBeSend.type = authenticationResponse;
 	authResponse.isSuccessful = 1;
-	_tcscpy(authResponse.serverPipename, pipeName->serverPipeName);
-	_tcscpy(authResponse.clientPipename, pipeName->clientPipeName);
 	packageToBeSend.buffer = &authResponse;
 	writePackage(responsePipe, &packageToBeSend);
 }

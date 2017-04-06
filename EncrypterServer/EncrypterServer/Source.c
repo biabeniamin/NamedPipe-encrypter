@@ -2,12 +2,9 @@
 #include <stdio.h> 
 #include <tchar.h>
 #include<string.h>
-#include "Connection.h"
-#include "PackagesHandler.h"
+#include "ServerPackagesHandler.h"
 int main(void)
 {
-	HANDLE hPipe =initializingPipeAsServer(TEXT("\\\\.\\pipe\\Pipe"));
-	TCHAR clientPipeName[] = TEXT("\\\\.\\pipe\\PipeA");
-	initializingServer(hPipe, clientPipeName,&packageReceived);
+	initializingCommunication();
 	return 0;
 }

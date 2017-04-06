@@ -2,17 +2,11 @@
 #include <stdio.h> 
 #include <tchar.h>
 #include<string.h>
-#include "ClientPackagesHandler.h"
-#include "..\\..\\EncrypterServer\\EncrypterServer\\Types.h"
-#include "..\\..\\EncrypterServer\\EncrypterServer\\Connection.h"
-int main(void)
+#include "Encryptor.h"
+int main()
 {
-	initializingCommunication();
-	
-	initializingConnection();
-	
-	authenticateConnection(TEXT("username"), TEXT("password"));
-	encryptData( TEXT("Ana are mere de vanzare"));
-	closeCommunication();
+	TCHAR text[100];
+	_tcscpy(text, TEXT("bla bla bla"));
+	encrypt(TEXT("username"), TEXT("password"), text);
 	return (0);
 }
