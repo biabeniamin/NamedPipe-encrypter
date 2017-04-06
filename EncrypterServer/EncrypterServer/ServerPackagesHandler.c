@@ -1,15 +1,46 @@
 #include "ServerPackagesHandler.h"
 #include "Connection.h"
 #include "Encryptor.h"
-#define MAX_CLIENTS 10
+#define MAX_CLIENTS 2
 #define TIMEOUT 5
 HANDLE threads[MAX_CLIENTS];
+threadStruc *firstThread;
+pipeNameConnection threadValues[MAX_CLIENTS];
 DWORD threadCount = 0;
 int packageReceived(package *pack, HANDLE responsePipe);
+threadStruc *getAvailableThread();
+DWORD WINAPI ClientThread(PVOID threadId);
+void createThreadForConnection(threadStruc *threadS)
+{
+	threadS->isRunning = 0;
+	threadS->hasFinished = 0;
+	threadS->thread= CreateThread(
+		NULL,
+		0,
+		ClientThread,
+		threadS,
+		CREATE_SUSPENDED,
+		NULL);
+}
 void initializingCommunication()
 {
 	HANDLE hPipe = initializingPipeAsServer(TEXT("\\\\.\\pipe\\Pipe"));
 	TCHAR clientPipeName[] = TEXT("\\\\.\\pipe\\PipeA");
+	firstThread = malloc(sizeof(threadStruc));
+	threadStruc *currentThread = firstThread;
+	for (int i = 0; i < MAX_CLIENTS; i++)
+	{
+		createThreadForConnection(currentThread);
+		if(i!=MAX_CLIENTS-1)
+			currentThread->next = malloc(sizeof(threadStruc));
+		else
+			currentThread->next = NULL;
+		_tcscpy(currentThread->connectionPipeName.serverPipeName, TEXT("\\\\.\\pipe\\PipeThXS"));
+		_tcscpy(currentThread->connectionPipeName.clientPipeName, TEXT("\\\\.\\pipe\\PipeThXC"));
+		currentThread->connectionPipeName.serverPipeName[15] = i + 97;
+		currentThread->connectionPipeName.clientPipeName[15] = i + 97;
+		currentThread = currentThread->next;
+	}
 	initializingServer(hPipe, clientPipeName, &packageReceived);
 }
 BOOL authenticateClient(authenticationValues *authValues)
@@ -19,25 +50,22 @@ BOOL authenticateClient(authenticationValues *authValues)
 		return TRUE;
 	return FALSE;
 }
-DWORD WINAPI ClientThread(PVOID pipeName)
+DWORD WINAPI ClientThread(PVOID threadSt)
 {
-	pipeNameConnection *pipeNameC = pipeName;
-	HANDLE hPipe = initializingPipeAsServer(pipeNameC->serverPipeName);
-	initializingServer(hPipe, pipeNameC->clientPipeName, &packageReceived);
-	free(pipeName);
+	threadStruc *threadS = threadSt;
+	threadS->isRunning = 1;
+	HANDLE hPipe = initializingPipeAsServer(threadS->connectionPipeName.serverPipeName);
+	initializingServer(hPipe, threadS->connectionPipeName.clientPipeName, &packageReceived);
+	threadS->isRunning = 0;
+	threadS->hasFinished = 1;
 }
 void clientAuthenticated(package *pack, HANDLE responsePipe)
 {
-	pipeNameConnection *pipeName=malloc(sizeof(pipeNameConnection));
-	_tcscpy(pipeName->serverPipeName, TEXT("\\\\.\\pipe\\PipeThXS"));
-	_tcscpy(pipeName->clientPipeName, TEXT("\\\\.\\pipe\\PipeThXC"));
-	int threadId = getThreadId();
-	pipeName->serverPipeName[15] = threadId + 97;
-	pipeName->clientPipeName[15] = threadId + 97;
+	threadStruc* threadS = getAvailableThread();
 	authenticationResponseValues authResponse;
-	_tcscpy(authResponse.serverPipename, pipeName->serverPipeName);
-	_tcscpy(authResponse.clientPipename, pipeName->clientPipeName);
-	threads[threadId] = CreateThread(NULL, 0, ClientThread,pipeName, 0, NULL);
+	_tcscpy(authResponse.serverPipename, threadS->connectionPipeName.serverPipeName);
+	_tcscpy(authResponse.clientPipename, threadS->connectionPipeName.clientPipeName);
+	ResumeThread(threadS->thread);
 	Sleep(10);
 	package packageToBeSend;
 	packageToBeSend.type = authenticationResponse;
@@ -70,25 +98,31 @@ int isServerRunning()
 		return 1;
 	return 0;
 }
-int getThreadId()
+threadStruc *getLastThreadS(threadStruc *threadS)
 {
-	if (threadCount >= MAX_CLIENTS)
+	if (threadS->next != NULL)
+		return getLastThreadS(threadS->next);
+	return threadS;
+}
+threadStruc *getAvailableThread()
+{
+	if (firstThread->hasFinished)
 	{
-		for (int i = 0; i < MAX_CLIENTS; i++)
-		{
-			DWORD status;
-			GetExitCodeThread(threads[i], &status);
-			if (status != STILL_ACTIVE)
-				return i;
-
-		}
+		threadStruc *threadSRe = firstThread;
+		firstThread = firstThread->next;
+		CloseHandle(threadSRe->thread);
+		createThreadForConnection(threadSRe);
+		threadSRe->next = NULL;
+		getLastThreadS(firstThread)->next = threadSRe;
 	}
-	else
+	threadStruc *threadS = firstThread;
+	while (threadS != NULL)
 	{
-		return threadCount;
-		threadCount++;
+		if (threadS->isRunning == 0 && threadS->hasFinished==0)
+			return threadS;
+		threadS = threadS->next;
 	}
-	return -1;
+	return NULL;
 }
 int packageReceived(package *pack,HANDLE responsePipe)
 {
@@ -105,7 +139,7 @@ int packageReceived(package *pack,HANDLE responsePipe)
 		_tprintf(TEXT("%d \n"), pack->type);
 		packageToBeSend.type = initializingResponse;
 		initValues.isAccepted = isServerRunning();
-		if (getThreadId() == -1)
+		if (getAvailableThread == NULL)
 			initValues.isAccepted = 0;
 		if (initValues.isAccepted == 0)
 			_tprintf(TEXT("Connection was denied!\n"));

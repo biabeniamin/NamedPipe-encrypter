@@ -51,5 +51,13 @@ typedef struct
 	TCHAR serverPipeName[100];
 	TCHAR clientPipeName[100];
 } pipeNameConnection;
-
+struct threadStructure
+{
+	HANDLE thread;
+	pipeNameConnection connectionPipeName;
+	int isRunning;
+	int hasFinished;
+	struct threadStructure *next;
+};
+typedef struct threadStructure threadStruc;
 #endif // TYPES_H_INCLUDED
