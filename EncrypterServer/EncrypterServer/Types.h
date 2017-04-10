@@ -1,6 +1,6 @@
 #ifndef TYPES_H_INCLUDED
 #define TYPES_H_INCLUDED
-
+#include "Log.h"
 typedef enum
 {
 	initializing = 0,

@@ -5,6 +5,7 @@
 #include "ServerPackagesHandler.h"
 int main(void)
 {
+	logWriteLine("dfhdf");
 	initializingCommunication();
 	return 0;
 }

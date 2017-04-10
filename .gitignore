@@ -15,3 +15,4 @@ EncrypterClient/EncrypterClient/EncrypterClient.vcxproj
 EncrypterClient/EncrypterClient/EncrypterClient.vcxproj.filters
 EncrypterServer/EncrypterServer/EncrypterServer.vcxproj
 EncrypterServer/EncrypterServer/EncrypterServer.vcxproj.filters
+EncrypterServer/EncrypterServer/log.txt
