@@ -35,12 +35,13 @@ void authenticateConnection(PTCHAR username, PTCHAR password)
 		waitAnswer(response, &packageReceived);
 	}
 }
-void encryptData(PTCHAR text)
+void encryptData(PTCHAR text,PTCHAR key)
 {
 	package p;
 	encryptionValues data;
 	p.type = encryption;
 	_tcscpy(data.buffer, text);
+	_tcscpy(data.key, key);
 	p.buffer = &data;
 	if (isOpen)
 	{

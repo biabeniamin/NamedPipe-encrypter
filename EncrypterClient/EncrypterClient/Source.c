@@ -7,6 +7,6 @@ int main()
 {
 	TCHAR text[100];
 	_tcscpy(text, TEXT("bla bla bla"));
-	encrypt(TEXT("username"), TEXT("password"), text);
+	encrypt(TEXT("username"), TEXT("password"), text,TEXT("abc"));
 	return (0);
 }

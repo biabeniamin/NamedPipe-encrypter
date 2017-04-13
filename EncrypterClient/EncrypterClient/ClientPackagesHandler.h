@@ -9,6 +9,6 @@ initializingConnection();
 void
 authenticateConnection(PTCHAR username, PTCHAR password);
 void 
-encryptData(PTCHAR text);
+encryptData(PTCHAR text,PTCHAR key);
 void
 closeCommunication();

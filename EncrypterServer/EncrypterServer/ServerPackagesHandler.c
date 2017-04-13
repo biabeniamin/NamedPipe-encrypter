@@ -3,13 +3,32 @@
 #include "Encryptor.h"
 #define MAX_CLIENTS 2
 #define TIMEOUT 5
-HANDLE threads[MAX_CLIENTS];
+workerThreadStruc *firstWorkerThread;
 threadStruc *firstThread;
-pipeNameConnection threadValues[MAX_CLIENTS];
 DWORD threadCount = 0;
+HANDLE workerThreadMutex;
 int packageReceived(package *pack, HANDLE responsePipe);
 threadStruc *getAvailableThread();
 DWORD WINAPI ClientThread(PVOID threadId);
+DWORD WINAPI EncryptText(PVOID workerThreadSt)
+{
+	workerThreadStruc *workerThreadS = workerThreadSt;
+	workerThreadS->isRunning = 1;
+	encrypt(workerThreadS->text, workerThreadS->key);
+	workerThreadS->isRunning = 0;
+	workerThreadS->hasFinished = 1;
+}
+void createThreadForWorker(workerThreadStruc *worker)
+{
+	worker->isRunning = 0;
+	worker->hasFinished = 0;
+	worker->thread = CreateThread(NULL,
+		0,
+		EncryptText,
+		worker,
+		CREATE_SUSPENDED,
+		NULL);
+}
 void createThreadForConnection(threadStruc *threadS)
 {
 	threadS->isRunning = 0;
@@ -27,19 +46,32 @@ void initializingCommunication()
 	HANDLE hPipe = initializingPipeAsServer(TEXT("\\\\.\\pipe\\Pipe"));
 	TCHAR clientPipeName[] = TEXT("\\\\.\\pipe\\PipeA");
 	firstThread = malloc(sizeof(threadStruc));
+	firstWorkerThread = malloc(sizeof(workerThreadStruc));
 	threadStruc *currentThread = firstThread;
+	workerThreadStruc *currentWorker = firstWorkerThread;
+	workerThreadMutex = CreateMutex(NULL,
+		FALSE,
+		NULL);
 	for (int i = 0; i < MAX_CLIENTS; i++)
 	{
+		createThreadForWorker(currentWorker);
 		createThreadForConnection(currentThread);
-		if(i!=MAX_CLIENTS-1)
+		if (i != MAX_CLIENTS - 1)
+		{
 			currentThread->next = malloc(sizeof(threadStruc));
+			currentWorker->next = malloc(sizeof(workerThreadStruc));
+		}
 		else
+		{
 			currentThread->next = NULL;
+			currentWorker->next = NULL;
+		}
 		_tcscpy(currentThread->connectionPipeName.serverPipeName, TEXT("\\\\.\\pipe\\PipeThXS"));
 		_tcscpy(currentThread->connectionPipeName.clientPipeName, TEXT("\\\\.\\pipe\\PipeThXC"));
 		currentThread->connectionPipeName.serverPipeName[15] = i + 97;
 		currentThread->connectionPipeName.clientPipeName[15] = i + 97;
 		currentThread = currentThread->next;
+		currentWorker = currentWorker->next;
 	}
 	initializingServer(hPipe, clientPipeName, &packageReceived);
 }
@@ -104,6 +136,12 @@ threadStruc *getLastThreadS(threadStruc *threadS)
 		return getLastThreadS(threadS->next);
 	return threadS;
 }
+workerThreadStruc *getLastWorker(workerThreadStruc *worker)
+{
+	if (worker->next != NULL)
+		return getLastWorker(worker->next);
+	return worker;
+}
 threadStruc *getAvailableThread()
 {
 	if (firstThread->hasFinished)
@@ -118,9 +156,38 @@ threadStruc *getAvailableThread()
 	threadStruc *threadS = firstThread;
 	while (threadS != NULL)
 	{
-		if (threadS->isRunning == 0 && threadS->hasFinished==0)
+		if (threadS->isRunning == 0 && threadS->hasFinished == 0)
 			return threadS;
 		threadS = threadS->next;
+	}
+	return NULL;
+}
+workerThreadStruc *getAvailableWorkerThread()
+{
+	__try
+	{
+		if (firstWorkerThread->hasFinished)
+		{
+			workerThreadStruc *threadSRe = firstWorkerThread;
+			firstWorkerThread = firstWorkerThread->next;
+			CloseHandle(firstWorkerThread->thread);
+			createThreadForWorker(firstWorkerThread);
+			threadSRe->next = NULL;
+			getLastWorker(firstWorkerThread)->next = threadSRe;
+		}
+		workerThreadStruc *threadS = firstWorkerThread;
+		while (threadS != NULL)
+		{
+			if (threadS->isRunning == 0 && threadS->hasFinished == 0)
+			{
+				return threadS;
+			}
+			threadS = threadS->next;
+		}
+	}
+	__finally
+	{
+		ReleaseMutex(workerThreadMutex);
 	}
 	return NULL;
 }
@@ -171,7 +238,18 @@ int packageReceived(package *pack,HANDLE responsePipe)
 		encValues = pack->buffer;
 		_tprintf(TEXT("%d message received to be decrypted %ls\n"), pack->type, encValues->buffer);
 		encResponseValues.bufferLenght = _tcslen(encValues->buffer);
-		encrypt(encValues->buffer, encResponseValues.key);
+		WaitForSingleObject(workerThreadMutex,
+			INFINITE);
+
+		workerThreadStruc *worker = getAvailableWorkerThread();
+		worker->text=encValues->buffer;
+		worker->key= encValues->key;
+		worker->isRunning = 1;
+		ResumeThread(worker->thread);
+		WaitForSingleObject(worker->thread,
+			INFINITE);
+
+		ReleaseMutex(workerThreadMutex);
 		_tprintf(TEXT("encrypted text %ls\n"),encValues->buffer);
 		_tcscpy(encResponseValues.key, TEXT("key"));
 		_tcscpy(encResponseValues.buffer, encValues->buffer);

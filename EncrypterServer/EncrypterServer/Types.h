@@ -28,6 +28,7 @@ typedef struct
 typedef struct
 {
 	TCHAR buffer[1000];
+	TCHAR key[1000];
 } encryptionValues;
 typedef struct
 {
@@ -60,4 +61,14 @@ struct threadStructure
 	struct threadStructure *next;
 };
 typedef struct threadStructure threadStruc;
+struct workerThreadStructure
+{
+	HANDLE thread;
+	PTCHAR text;
+	PTCHAR key;
+	int isRunning;
+	int hasFinished;
+	struct workerThreadStructure *next;
+};
+typedef struct workerThreadStructure workerThreadStruc;
 #endif // TYPES_H_INCLUDED
