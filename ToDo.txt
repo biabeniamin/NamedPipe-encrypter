@@ -1,0 +1,6 @@
+stopflag stop server,not just refuse accepting connections
+number maxim of connections as parameter
+nr workers as parameter
+separate thread for console
+list,exit command
+data as packets
