@@ -1,7 +1,11 @@
 #include "ServerPackagesHandler.h"
 #include "Connection.h"
+#include "Log.h"
 #include "Encryptor.h"
-#define MAX_CLIENTS 2
+#include <tchar.h>
+#include <windows.h> 
+#include <stdio.h> 
+#include<string.h>
 #define TIMEOUT 5
 workerThreadStruc *firstWorkerThread;
 threadStruc *firstThread;
@@ -16,6 +20,7 @@ DWORD WINAPI EncryptText(PVOID workerThreadSt)
 	workerThreadS->isRunning = 1;
 	encrypt(workerThreadS->text, workerThreadS->key);
 	workerThreadS->isRunning = 0;
+	workerThreadS->canBeReused = 0;
 	workerThreadS->hasFinished = 1;
 }
 void createThreadForWorker(workerThreadStruc *worker)
@@ -41,8 +46,28 @@ void createThreadForConnection(threadStruc *threadS)
 		CREATE_SUSPENDED,
 		NULL);
 }
-void initializingCommunication()
+void loadUsers()
 {
+	TCHAR user[100];
+	TCHAR password[100];
+	DWORD bytesReaded;
+	//_tcscpy(user,)
+	HANDLE usersFile = CreateFile(TEXT("users.txt"),
+		GENERIC_READ,
+		FILE_SHARE_READ,
+		NULL,
+		OPEN_EXISTING,
+		FILE_ATTRIBUTE_NORMAL,
+		NULL);
+	ReadFile(usersFile,
+		user,
+		100,
+		&bytesReaded,
+		NULL);
+}
+void initializingCommunication(DWORD nrClients, DWORD nrWorkers)
+{
+	loadUsers();
 	HANDLE hPipe = initializingPipeAsServer(TEXT("\\\\.\\pipe\\Pipe"));
 	TCHAR clientPipeName[] = TEXT("\\\\.\\pipe\\PipeA");
 	firstThread = malloc(sizeof(threadStruc));
@@ -52,25 +77,35 @@ void initializingCommunication()
 	workerThreadMutex = CreateMutex(NULL,
 		FALSE,
 		NULL);
-	for (int i = 0; i < MAX_CLIENTS; i++)
+	for (int i = 0; i < nrClients; i++)
 	{
-		createThreadForWorker(currentWorker);
 		createThreadForConnection(currentThread);
-		if (i != MAX_CLIENTS - 1)
+		if (i != nrClients - 1)
 		{
 			currentThread->next = malloc(sizeof(threadStruc));
-			currentWorker->next = malloc(sizeof(workerThreadStruc));
 		}
 		else
 		{
 			currentThread->next = NULL;
-			currentWorker->next = NULL;
 		}
 		_tcscpy(currentThread->connectionPipeName.serverPipeName, TEXT("\\\\.\\pipe\\PipeThXS"));
 		_tcscpy(currentThread->connectionPipeName.clientPipeName, TEXT("\\\\.\\pipe\\PipeThXC"));
 		currentThread->connectionPipeName.serverPipeName[15] = i + 97;
 		currentThread->connectionPipeName.clientPipeName[15] = i + 97;
 		currentThread = currentThread->next;
+	}
+	for (int i = 0; i < nrWorkers; i++)
+	{
+		createThreadForWorker(currentWorker);
+		if (i != nrWorkers - 1)
+		{
+			currentWorker->next = malloc(sizeof(workerThreadStruc));
+		}
+		else
+		{
+			currentWorker->next = NULL;
+		}
+		currentWorker->canBeReused = 1;
 		currentWorker = currentWorker->next;
 	}
 	initializingServer(hPipe, clientPipeName, &packageReceived);
@@ -166,7 +201,7 @@ workerThreadStruc *getAvailableWorkerThread()
 {
 	__try
 	{
-		if (firstWorkerThread->hasFinished)
+		if (firstWorkerThread->hasFinished && firstWorkerThread->canBeReused==1)
 		{
 			workerThreadStruc *threadSRe = firstWorkerThread;
 			firstWorkerThread = firstWorkerThread->next;
@@ -187,44 +222,52 @@ workerThreadStruc *getAvailableWorkerThread()
 	}
 	__finally
 	{
-		ReleaseMutex(workerThreadMutex);
+		//
 	}
 	return NULL;
 }
 int packageReceived(package *pack,HANDLE responsePipe)
 {
+	workerThreadStruc **workers;
 	authenticationValues *authenticationVal;
 	requestAnswerValues requestAnswerVal;
 	initializingValues initValues;
 	encryptionValues *encValues;
 	encryptionResponseValues encResponseValues;
 	package packageToBeSend;
+	PTCHAR *textSegments;
+	DWORD dNrOfTextSegments;
 	//HANDLE responsePipe = initializingPipeAsClient(TEXT("\\\\.\\pipe\\PipeA"));
 	switch (pack->type)
 	{
 	case initializing:
-		_tprintf(TEXT("%d \n"), pack->type);
+		logWriteLine(TEXT("%d \n"), pack->type);
 		packageToBeSend.type = initializingResponse;
 		initValues.isAccepted = isServerRunning();
 		if (getAvailableThread == NULL)
 			initValues.isAccepted = 0;
 		if (initValues.isAccepted == 0)
-			_tprintf(TEXT("Connection was denied!\n"));
+			logWriteLine(TEXT("Connection was denied!"));
 		packageToBeSend.buffer = &initValues;
 		writePackage(responsePipe, &packageToBeSend);
 		break;
 	case authentication:
 		authenticationVal = pack->buffer;
-		_tprintf(TEXT("%d %ls %ls \n"), pack->type, authenticationVal->username, authenticationVal->password);
+		logNewLine();
+		logWriteNumber(pack->type);
+		logWriteWord(TEXT(" "));
+		logWriteWord(authenticationVal->username);
+		logWriteWord(TEXT(" "));
+		logWriteLine(authenticationVal->password);
 		if (authenticateClient(authenticationVal))
 		{
-			_tprintf(TEXT("User was loged on!\n"));
+			logWriteLine(TEXT("User was loged on!\n"));
 			requestAnswerVal.isSuccesful = TRUE;
 			clientAuthenticated(pack, responsePipe);
 		}
 		else
 		{
-			_tprintf(TEXT("Invalid credentials!\n"));
+			logWriteLine(TEXT("Invalid credentials!\n"));
 			packageToBeSend.type = authenticationResponse;
 			requestAnswerVal.isSuccesful = FALSE;
 			_tcscpy(requestAnswerVal.buffer, TEXT("not OK"));
@@ -236,28 +279,57 @@ int packageReceived(package *pack,HANDLE responsePipe)
 	case encryption:
 		packageToBeSend.type = encryptionResponse;
 		encValues = pack->buffer;
-		_tprintf(TEXT("%d message received to be decrypted %ls\n"), pack->type, encValues->buffer);
+		logNewLine();
+		logWriteNumber(pack->type);
+		logWriteWord(TEXT(" message received to be decrypted "));
+		logWriteLine(encValues->buffer);
 		encResponseValues.bufferLenght = _tcslen(encValues->buffer);
 		WaitForSingleObject(workerThreadMutex,
 			INFINITE);
-
-		workerThreadStruc *worker = getAvailableWorkerThread();
-		worker->text=encValues->buffer;
-		worker->key= encValues->key;
-		worker->isRunning = 1;
-		ResumeThread(worker->thread);
-		WaitForSingleObject(worker->thread,
-			INFINITE);
-
-		ReleaseMutex(workerThreadMutex);
-		_tprintf(TEXT("encrypted text %ls\n"),encValues->buffer);
+		//divide buffer per workers
+		dNrOfTextSegments = _tcslen(encValues->buffer) / LENGHT_PER_WORKER;
+		workers = malloc(dNrOfTextSegments *sizeof(workerThreadStruc*));
+		textSegments = malloc(dNrOfTextSegments * sizeof(PTCHAR));
+		for (int i = 0; i < _tcslen(encValues->buffer); i+=LENGHT_PER_WORKER)
+		{
+			workerThreadMutex=OpenMutex(SYNCHRONIZE,
+				TRUE,
+				TEXT("worker"));
+			do
+			{
+				workers[i] = getAvailableWorkerThread();
+			} while (workers[i] == NULL);
+			workers[i]->isRunning = 1;
+			ReleaseMutex(workerThreadMutex);
+			textSegments[i] = malloc(LENGHT_PER_WORKER * sizeof(TCHAR));
+			_tcsncpy(textSegments[i] , encValues->buffer+i, LENGHT_PER_WORKER);
+			workers[i]->text = textSegments[i];
+			workers[i]->key = encValues->key;
+			ResumeThread(workers[i]->thread);
+		}
+		WaitForSingleObject(workers[0]->thread,INFINITE);
+		for (int i = 0; i < _tcslen(encValues->buffer); i += LENGHT_PER_WORKER)
+		{
+			WaitForSingleObject(workers[i]->thread, INFINITE);
+			for (int j = 0; j < LENGHT_PER_WORKER; j++)
+			{
+				encValues->buffer[i + j] = textSegments[i][j];
+			}
+			workers[i]->canBeReused = 1;
+		}
+		logWriteWord(TEXT("encrypted text %ls\n"));
+		/*for (int i = 0; i < _tcslen(encValues->buffer); i++)
+		{
+			logWriteChar(encValues->buffer[i]);
+		}*/
 		_tcscpy(encResponseValues.key, TEXT("key"));
 		_tcscpy(encResponseValues.buffer, encValues->buffer);
 		packageToBeSend.buffer = &encResponseValues;
 		writePackage(responsePipe, &packageToBeSend);
 		break;
 	case closing:
-		_tprintf(TEXT("Connection closed"));
+		logNewLine();
+		logWriteLine(TEXT("Connection closed"));
 		return 1;
 	}
 	free(pack->buffer);

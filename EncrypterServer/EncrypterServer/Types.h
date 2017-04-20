@@ -1,6 +1,7 @@
 #ifndef TYPES_H_INCLUDED
 #define TYPES_H_INCLUDED
 #include "Log.h"
+#define LENGHT_PER_WORKER 4
 typedef enum
 {
 	initializing = 0,
@@ -29,6 +30,7 @@ typedef struct
 {
 	TCHAR buffer[1000];
 	TCHAR key[1000];
+	DWORD dOrder;
 } encryptionValues;
 typedef struct
 {
@@ -68,7 +70,14 @@ struct workerThreadStructure
 	PTCHAR key;
 	int isRunning;
 	int hasFinished;
+	int canBeReused;
 	struct workerThreadStructure *next;
 };
 typedef struct workerThreadStructure workerThreadStruc;
+typedef struct
+{
+	DWORD dNrWorkers;
+	DWORD dNrThreads;
+	PINT piIsStopped;
+} connectionParamaters;
 #endif // TYPES_H_INCLUDED

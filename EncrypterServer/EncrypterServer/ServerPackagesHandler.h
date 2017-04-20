@@ -4,4 +4,4 @@
 #include<string.h>
 #include "Types.h"
 void
-initializingCommunication();
+initializingCommunication(DWORD nrClients, DWORD nrWorkers);
