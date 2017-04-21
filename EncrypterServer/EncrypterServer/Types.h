@@ -1,7 +1,7 @@
 #ifndef TYPES_H_INCLUDED
 #define TYPES_H_INCLUDED
 #include "Log.h"
-#define LENGHT_PER_WORKER 4
+#define LENGHT_PER_WORKER 10
 typedef enum
 {
 	initializing = 0,

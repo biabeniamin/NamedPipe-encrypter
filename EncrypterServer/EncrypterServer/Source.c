@@ -10,11 +10,11 @@ DWORD WINAPI run(PVOID parameters)
 }
 int main(void)
 {
-	HANDLE hServer;
+	HANDLE hServer; 
 	logWriteLine(TEXT("dfhdf"));
 	connectionParamaters con;
 	con.dNrThreads = 2;
-	con.dNrWorkers = 5;
+	con.dNrWorkers = 2;
 	hServer = CreateThread(NULL,
 		0,
 		run,

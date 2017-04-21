@@ -27,6 +27,7 @@ void createThreadForWorker(workerThreadStruc *worker)
 {
 	worker->isRunning = 0;
 	worker->hasFinished = 0;
+	worker->canBeReused = 1;
 	worker->thread = CreateThread(NULL,
 		0,
 		EncryptText,
@@ -226,17 +227,76 @@ workerThreadStruc *getAvailableWorkerThread()
 	}
 	return NULL;
 }
+void encryptPackage(PTCHAR text, PTCHAR key)
+{
+	PTCHAR *textSegments;
+	DWORD dNrOfTextSegments;
+	workerThreadStruc **workers;
+	DWORD dCurrentSegment;
+	DWORD dTextLenght = _tcslen(text);
+	WaitForSingleObject(workerThreadMutex,
+		INFINITE);
+	//divide buffer per workers
+	dNrOfTextSegments = dTextLenght / LENGHT_PER_WORKER;
+	workers = malloc(dNrOfTextSegments * sizeof(workerThreadStruc*));
+	textSegments = malloc(dNrOfTextSegments * sizeof(PTCHAR));
+	for (int i = 0; i < dTextLenght; i += LENGHT_PER_WORKER)
+	{
+		dCurrentSegment = i / LENGHT_PER_WORKER;
+		workerThreadMutex = OpenMutex(SYNCHRONIZE,
+			TRUE,
+			TEXT("worker"));
+		do
+		{
+			workers[dCurrentSegment] = getAvailableWorkerThread();
+			for (int j = 0; j < dCurrentSegment; j++)
+			{
+				if (workers[j]->hasFinished && workers[j]->canBeReused == 0)
+				{
+					for (int k = 0; k < LENGHT_PER_WORKER; k++)
+					{
+						text[j+k] = textSegments[j][k];
+					}
+					workers[j]->canBeReused = 1;
+				}
+			}
+		} while (workers[dCurrentSegment] == NULL);
+		workers[dCurrentSegment]->isRunning = 1;
+		ReleaseMutex(workerThreadMutex);
+		textSegments[dCurrentSegment] = malloc(LENGHT_PER_WORKER * sizeof(TCHAR));
+		_tcsncpy(textSegments[dCurrentSegment],text+ dCurrentSegment, LENGHT_PER_WORKER);
+		workers[dCurrentSegment]->text = textSegments[dCurrentSegment];
+		workers[dCurrentSegment]->key = key;
+		ResumeThread(workers[dCurrentSegment]->thread);
+	}
+	int t = _tcslen(text) / LENGHT_PER_WORKER + 1;
+	for (int i = 0; i < dTextLenght / LENGHT_PER_WORKER+1; i++)
+	{
+		if(workers[i]->hasFinished==0)
+			WaitForSingleObject(workers[i]->thread, INFINITE);
+		if (workers[i]->hasFinished && workers[i]->canBeReused==0)
+		{
+			for (int j = 0; j < LENGHT_PER_WORKER; j++)
+			{
+				text[i + j] = textSegments[i][j];
+			}
+		}
+		workers[i]->canBeReused = 1;
+		free(textSegments[i]);
+		t = dTextLenght / LENGHT_PER_WORKER + 1;
+	}
+	//free(textSegments);
+}
 int packageReceived(package *pack,HANDLE responsePipe)
 {
-	workerThreadStruc **workers;
+	
 	authenticationValues *authenticationVal;
 	requestAnswerValues requestAnswerVal;
 	initializingValues initValues;
 	encryptionValues *encValues;
 	encryptionResponseValues encResponseValues;
 	package packageToBeSend;
-	PTCHAR *textSegments;
-	DWORD dNrOfTextSegments;
+	
 	//HANDLE responsePipe = initializingPipeAsClient(TEXT("\\\\.\\pipe\\PipeA"));
 	switch (pack->type)
 	{
@@ -284,44 +344,12 @@ int packageReceived(package *pack,HANDLE responsePipe)
 		logWriteWord(TEXT(" message received to be decrypted "));
 		logWriteLine(encValues->buffer);
 		encResponseValues.bufferLenght = _tcslen(encValues->buffer);
-		WaitForSingleObject(workerThreadMutex,
-			INFINITE);
-		//divide buffer per workers
-		dNrOfTextSegments = _tcslen(encValues->buffer) / LENGHT_PER_WORKER;
-		workers = malloc(dNrOfTextSegments *sizeof(workerThreadStruc*));
-		textSegments = malloc(dNrOfTextSegments * sizeof(PTCHAR));
-		for (int i = 0; i < _tcslen(encValues->buffer); i+=LENGHT_PER_WORKER)
-		{
-			workerThreadMutex=OpenMutex(SYNCHRONIZE,
-				TRUE,
-				TEXT("worker"));
-			do
-			{
-				workers[i] = getAvailableWorkerThread();
-			} while (workers[i] == NULL);
-			workers[i]->isRunning = 1;
-			ReleaseMutex(workerThreadMutex);
-			textSegments[i] = malloc(LENGHT_PER_WORKER * sizeof(TCHAR));
-			_tcsncpy(textSegments[i] , encValues->buffer+i, LENGHT_PER_WORKER);
-			workers[i]->text = textSegments[i];
-			workers[i]->key = encValues->key;
-			ResumeThread(workers[i]->thread);
-		}
-		WaitForSingleObject(workers[0]->thread,INFINITE);
-		for (int i = 0; i < _tcslen(encValues->buffer); i += LENGHT_PER_WORKER)
-		{
-			WaitForSingleObject(workers[i]->thread, INFINITE);
-			for (int j = 0; j < LENGHT_PER_WORKER; j++)
-			{
-				encValues->buffer[i + j] = textSegments[i][j];
-			}
-			workers[i]->canBeReused = 1;
-		}
+		encryptPackage(encValues->buffer, encValues->key);
 		logWriteWord(TEXT("encrypted text %ls\n"));
-		/*for (int i = 0; i < _tcslen(encValues->buffer); i++)
+		for (int i = 0; i < _tcslen(encValues->buffer); i++)
 		{
 			logWriteChar(encValues->buffer[i]);
-		}*/
+		}
 		_tcscpy(encResponseValues.key, TEXT("key"));
 		_tcscpy(encResponseValues.buffer, encValues->buffer);
 		packageToBeSend.buffer = &encResponseValues;
