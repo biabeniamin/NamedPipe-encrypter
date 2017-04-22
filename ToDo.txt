@@ -3,4 +3,4 @@ list,exit command
 data as packets
 send us big packets separated
 users from file
-sync key per packets
+timeout

@@ -6,7 +6,6 @@
 #include <windows.h> 
 #include <stdio.h> 
 #include<string.h>
-#define TIMEOUT 5
 workerThreadStruc *firstWorkerThread;
 threadStruc *firstThread;
 DWORD threadCount = 0;
@@ -302,8 +301,8 @@ void encryptPackage(PTCHAR text, PTCHAR key)
 		workers[i]->canBeReused = 1;
 		free(textSegments[i]);
 	}
-	free(textSegments);
-	free(workers);
+	//free(textSegments);
+	//free(workers);
 }
 int packageReceived(package *pack,HANDLE responsePipe)
 {

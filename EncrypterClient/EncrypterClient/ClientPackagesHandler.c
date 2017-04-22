@@ -39,13 +39,31 @@ void encryptData(PTCHAR text,PTCHAR key)
 {
 	package p;
 	encryptionValues data;
+	DWORD lenght;
+	DWORD dKeyPosition;
+	DWORD dKeyLenght;
 	p.type = encryption;
-	_tcscpy(data.buffer, text);
-	_tcscpy(data.key, key);
 	p.buffer = &data;
+	dKeyLenght = _tcslen(key);
 	if (isOpen)
 	{
-		writePackage(h, &p);
+		lenght = _tcslen(text);
+		for (DWORD i = 0; i < lenght; i+=MAX_BUFFER)
+		{
+			_tcsncpy(data.buffer, text + i, MAX_BUFFER);
+			data.buffer[i + MAX_BUFFER] = '\0';
+			//sync key with text
+			dKeyPosition = i % (_tcslen(key));
+			_tcscpy(data.key, key+dKeyPosition);
+			_tcsncpy(data.key+ dKeyLenght-dKeyPosition, key, dKeyLenght-( dKeyLenght - dKeyPosition));
+			data.dOrder = i / MAX_BUFFER;
+			if (lenght / MAX_BUFFER == i + 1)
+				data.fIsLast = 1;
+			else
+				data.fIsLast = 0;
+			writePackage(h, &p);
+		}
+		
 		waitAnswer(response, &packageReceived);
 	}
 }

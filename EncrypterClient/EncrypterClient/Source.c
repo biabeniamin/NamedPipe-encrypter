@@ -5,13 +5,16 @@
 #include "Encryptor.h"
 int main()
 {
-	TCHAR text[4000];
+	TCHAR text[9000];
 	_tcscpy(text, TEXT("bla bla bla"));
-	for (int i = 0; i < 4000; i++)
+	for (int i = 0; i < 9000; i++)
 	{
-		text[i] = 'a';
+		if(i<5000)
+			text[i] = 'a';
+		else
+			text[i] = 'b';
 	}
-	//text[4999] = '\0';
+	text[8999] = '\0';
 	encrypt(TEXT("username"), TEXT("password"), text,TEXT("abc"));
 	return (0);
 }

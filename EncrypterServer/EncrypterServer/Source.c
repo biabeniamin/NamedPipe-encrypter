@@ -14,7 +14,7 @@ int main(void)
 	logWriteLine(TEXT("dfhdf"));
 	connectionParamaters con;
 	con.dNrThreads = 1;
-	con.dNrWorkers = 1;
+	con.dNrWorkers = 100;
 	/*_tprintf(TEXT("number of threads for clients:"));
 	_tscanf(TEXT("%d"), &con.dNrThreads);
 	_tprintf(TEXT("number of workers:"));
