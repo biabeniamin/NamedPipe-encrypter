@@ -5,7 +5,7 @@
 #include "Encryptor.h"
 int main()
 {
-	TCHAR text[9000];
+	TCHAR text[10000];
 	_tcscpy(text, TEXT("bla bla bla"));
 	for (int i = 0; i < 9000; i++)
 	{
@@ -14,6 +14,7 @@ int main()
 		else
 			text[i] = 'b';
 	}
+	//text[1] = 'b';
 	text[8999] = '\0';
 	encrypt(TEXT("username"), TEXT("password"), text,TEXT("abc"));
 	return (0);

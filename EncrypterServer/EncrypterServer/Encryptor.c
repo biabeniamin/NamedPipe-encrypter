@@ -5,7 +5,6 @@ PTCHAR getEncryptionKey()
 }
 PTCHAR encrypt(PTCHAR text, PTCHAR key, DWORD keyPosition)
 {
-	_tcscpy(key, getEncryptionKey());
 	int intPositionOnKey = keyPosition;
 	int intKeyLenght = _tcslen(key);
 	intPositionOnKey %= intKeyLenght;

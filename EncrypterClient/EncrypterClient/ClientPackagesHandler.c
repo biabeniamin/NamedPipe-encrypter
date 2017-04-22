@@ -64,14 +64,16 @@ void sendPackage(DWORD start)
 }
 void encryptData(PTCHAR text,PTCHAR key)
 {
+	DWORD textLenght = _tcslen(text);
 	if (isOpen)
 	{
 		ptText = text;
 		ptKey = key;
-		sendPackage(0);
-		waitAnswer(response, &packageReceived);
-		sendPackage(5000);
-		waitAnswer(response, &packageReceived);
+		for (DWORD i = 0; i < textLenght; i+=MAX_BUFFER)
+		{
+			sendPackage(i);
+			waitAnswer(response, &packageReceived);
+		}
 	}
 }
 void closeCommunication()
@@ -123,7 +125,11 @@ int packageReceived(package *pack)
 		break;
 	case encryptionResponse:
 		encResponseVal = pack->buffer;
-		_tprintf(TEXT("%d was encrypted.The result is %ls with key %ls with lenght of %d\n"), pack->type, encResponseVal->buffer,encResponseVal->key,encResponseVal->bufferLenght);
+		_tprintf(TEXT("%d was encrypted.The result is %ls with key %s with lenght of %d\n"), pack->type, encResponseVal->buffer,encResponseVal->key,encResponseVal->bufferLenght);
+		for (DWORD i = encResponseVal->dOrder*MAX_BUFFER; i < encResponseVal->dOrder*MAX_BUFFER +MAX_BUFFER; i++)
+		{
+			ptText[i] = encResponseVal->buffer[i%MAX_BUFFER];
+		}
 		//close server if it is the last package
 		return encResponseVal->fIsLast;
 		break;
