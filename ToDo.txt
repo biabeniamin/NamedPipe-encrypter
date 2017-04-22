@@ -2,3 +2,5 @@ stopflag stop server,not just refuse accepting connections
 list,exit command
 data as packets
 send us big packets separated
+users from file
+sync key per packets

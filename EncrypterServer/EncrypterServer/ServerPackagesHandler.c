@@ -10,6 +10,7 @@
 workerThreadStruc *firstWorkerThread;
 threadStruc *firstThread;
 DWORD threadCount = 0;
+DWORD dMaxWorkers;
 HANDLE workerThreadMutex;
 int packageReceived(package *pack, HANDLE responsePipe);
 threadStruc *getAvailableThread();
@@ -69,6 +70,7 @@ void loadUsers()
 void initializingCommunication(DWORD nrClients, DWORD nrWorkers)
 {
 	loadUsers();
+	dMaxWorkers = nrWorkers;
 	HANDLE hPipe = initializingPipeAsServer(TEXT("\\\\.\\pipe\\Pipe"));
 	TCHAR clientPipeName[] = TEXT("\\\\.\\pipe\\PipeA");
 	firstThread = malloc(sizeof(threadStruc));
@@ -122,6 +124,7 @@ DWORD WINAPI ClientThread(PVOID threadSt)
 {
 	threadStruc *threadS = threadSt;
 	threadS->isRunning = 1;
+	threadS->dThreadId = GetCurrentThreadId();
 	HANDLE hPipe = initializingPipeAsServer(threadS->connectionPipeName.serverPipeName);
 	initializingServer(hPipe, threadS->connectionPipeName.clientPipeName, &packageReceived);
 	threadS->isRunning = 0;
@@ -140,6 +143,15 @@ void clientAuthenticated(package *pack, HANDLE responsePipe)
 	authResponse.isSuccessful = 1;
 	packageToBeSend.buffer = &authResponse;
 	writePackage(responsePipe, &packageToBeSend);
+}
+void printOpenedConnections()
+{
+	threadStruc *tSCurrent = firstThread;
+	do
+	{
+		_tprintf(" %d \n", tSCurrent->dThreadId);
+		tSCurrent = tSCurrent->next;
+	} while (tSCurrent->next != NULL);
 }
 int isServerRunning()
 {
@@ -205,11 +217,13 @@ workerThreadStruc *getAvailableWorkerThread()
 		if (firstWorkerThread->hasFinished && firstWorkerThread->canBeReused==1)
 		{
 			workerThreadStruc *threadSRe = firstWorkerThread;
-			firstWorkerThread = firstWorkerThread->next;
-			CloseHandle(firstWorkerThread->thread);
-			createThreadForWorker(firstWorkerThread);
+			if(firstWorkerThread->next!=NULL)
+				firstWorkerThread = firstWorkerThread->next;
+			CloseHandle(threadSRe->thread);
+			createThreadForWorker(threadSRe);
 			threadSRe->next = NULL;
-			getLastWorker(firstWorkerThread)->next = threadSRe;
+			if (firstWorkerThread->next != NULL)
+				getLastWorker(firstWorkerThread)->next = threadSRe;
 		}
 		workerThreadStruc *threadS = firstWorkerThread;
 		while (threadS != NULL)
@@ -269,8 +283,7 @@ void encryptPackage(PTCHAR text, PTCHAR key)
 		workers[dCurrentSegment]->key = key;
 		ResumeThread(workers[dCurrentSegment]->thread);
 	}
-	int t = _tcslen(text) / LENGHT_PER_WORKER + 1;
-	for (int i = 0; i < dTextLenght / LENGHT_PER_WORKER+1; i++)
+	for (int i = 0; i < MIN(dMaxWorkers, dTextLenght / LENGHT_PER_WORKER + 1); i++)
 	{
 		if(workers[i]->hasFinished==0)
 			WaitForSingleObject(workers[i]->thread, INFINITE);
@@ -283,9 +296,9 @@ void encryptPackage(PTCHAR text, PTCHAR key)
 		}
 		workers[i]->canBeReused = 1;
 		free(textSegments[i]);
-		t = dTextLenght / LENGHT_PER_WORKER + 1;
 	}
-	//free(textSegments);
+	free(textSegments);
+	free(workers);
 }
 int packageReceived(package *pack,HANDLE responsePipe)
 {

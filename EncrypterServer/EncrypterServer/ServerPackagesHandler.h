@@ -5,3 +5,5 @@
 #include "Types.h"
 void
 initializingCommunication(DWORD nrClients, DWORD nrWorkers);
+void
+printOpenedConnections();

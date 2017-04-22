@@ -14,13 +14,24 @@ int main(void)
 	logWriteLine(TEXT("dfhdf"));
 	connectionParamaters con;
 	con.dNrThreads = 2;
-	con.dNrWorkers = 2;
+	con.dNrWorkers = 1;
 	hServer = CreateThread(NULL,
 		0,
 		run,
 		&con,
 		0,
 		NULL);
+
+	while (1)
+	{
+		TCHAR com[100];
+		_tscanf(TEXT("%ls"), com);
+		if (_tcscmp(com, TEXT("list")) == 0)
+		{
+			printOpenedConnections();
+		}
+	}
+
 	WaitForSingleObject(hServer, INFINITE);
 	return 0;
 }

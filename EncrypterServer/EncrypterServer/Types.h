@@ -1,7 +1,8 @@
 #ifndef TYPES_H_INCLUDED
 #define TYPES_H_INCLUDED
 #include "Log.h"
-#define LENGHT_PER_WORKER 10
+#define LENGHT_PER_WORKER 2
+#define MIN(a,b) ((a)<(b)?(a):(b))
 typedef enum
 {
 	initializing = 0,
@@ -58,6 +59,7 @@ struct threadStructure
 {
 	HANDLE thread;
 	pipeNameConnection connectionPipeName;
+	DWORD dThreadId;
 	int isRunning;
 	int hasFinished;
 	struct threadStructure *next;
