@@ -41,6 +41,8 @@ typedef struct
 	DWORD bufferLenght;
 	TCHAR buffer[MAX_BUFFER+2];
 	TCHAR key[10];
+	DWORD dOrder;
+	int fIsLast;
 } encryptionResponseValues;
 typedef struct
 {

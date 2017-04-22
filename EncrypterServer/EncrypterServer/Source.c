@@ -13,7 +13,7 @@ int main(void)
 	HANDLE hServer; 
 	logWriteLine(TEXT("dfhdf"));
 	connectionParamaters con;
-	con.dNrThreads = 1;
+	con.dNrThreads = 3;
 	con.dNrWorkers = 100;
 	/*_tprintf(TEXT("number of threads for clients:"));
 	_tscanf(TEXT("%d"), &con.dNrThreads);

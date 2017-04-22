@@ -2,6 +2,8 @@
 HANDLE h;
 HANDLE response;
 int isOpen = 0;
+PTCHAR ptText;
+PTCHAR ptKey;
 void initializingCommunication()
 {
 	h = initializingPipeAsClient(TEXT("\\\\.\\pipe\\Pipe"));
@@ -35,7 +37,7 @@ void authenticateConnection(PTCHAR username, PTCHAR password)
 		waitAnswer(response, &packageReceived);
 	}
 }
-void encryptData(PTCHAR text,PTCHAR key)
+void sendPackage(DWORD start)
 {
 	package p;
 	encryptionValues data;
@@ -44,26 +46,31 @@ void encryptData(PTCHAR text,PTCHAR key)
 	DWORD dKeyLenght;
 	p.type = encryption;
 	p.buffer = &data;
-	dKeyLenght = _tcslen(key);
+	dKeyLenght = _tcslen(ptKey);
+	lenght = _tcslen(ptText);
+	_tcsncpy(data.buffer, ptText + start, MAX_BUFFER);
+	data.buffer[start + MAX_BUFFER] = '\0';
+	//sync key with text
+	dKeyPosition = start % (_tcslen(ptKey));
+	_tcscpy(data.key, ptKey + dKeyPosition);
+	_tcsncpy(data.key + dKeyLenght - dKeyPosition, ptKey, dKeyLenght - (dKeyLenght - dKeyPosition));
+	data.key[dKeyLenght] = '\0';
+	data.dOrder = start / MAX_BUFFER;
+	if (lenght / MAX_BUFFER == start + 1)
+		data.fIsLast = 1;
+	else
+		data.fIsLast = 0;
+	writePackage(h, &p);
+}
+void encryptData(PTCHAR text,PTCHAR key)
+{
 	if (isOpen)
 	{
-		lenght = _tcslen(text);
-		for (DWORD i = 0; i < lenght; i+=MAX_BUFFER)
-		{
-			_tcsncpy(data.buffer, text + i, MAX_BUFFER);
-			data.buffer[i + MAX_BUFFER] = '\0';
-			//sync key with text
-			dKeyPosition = i % (_tcslen(key));
-			_tcscpy(data.key, key+dKeyPosition);
-			_tcsncpy(data.key+ dKeyLenght-dKeyPosition, key, dKeyLenght-( dKeyLenght - dKeyPosition));
-			data.dOrder = i / MAX_BUFFER;
-			if (lenght / MAX_BUFFER == i + 1)
-				data.fIsLast = 1;
-			else
-				data.fIsLast = 0;
-			writePackage(h, &p);
-		}
-		
+		ptText = text;
+		ptKey = key;
+		sendPackage(0);
+		waitAnswer(response, &packageReceived);
+		sendPackage(5000);
 		waitAnswer(response, &packageReceived);
 	}
 }
@@ -117,7 +124,8 @@ int packageReceived(package *pack)
 	case encryptionResponse:
 		encResponseVal = pack->buffer;
 		_tprintf(TEXT("%d was encrypted.The result is %ls with key %ls with lenght of %d\n"), pack->type, encResponseVal->buffer,encResponseVal->key,encResponseVal->bufferLenght);
-		return 1;
+		//close server if it is the last package
+		return encResponseVal->fIsLast;
 		break;
 	}
 	return 0;
