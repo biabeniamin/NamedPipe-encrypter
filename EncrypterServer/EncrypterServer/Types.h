@@ -1,7 +1,8 @@
 #ifndef TYPES_H_INCLUDED
 #define TYPES_H_INCLUDED
 #include "Log.h"
-#define LENGHT_PER_WORKER 2
+#define LENGHT_PER_WORKER 1
+#define MAX_BUFFER 5000
 #define MIN(a,b) ((a)<(b)?(a):(b))
 typedef enum
 {
@@ -29,14 +30,14 @@ typedef struct
 } initializingValues;
 typedef struct
 {
-	TCHAR buffer[1000];
+	TCHAR buffer[MAX_BUFFER];
 	TCHAR key[1000];
 	DWORD dOrder;
 } encryptionValues;
 typedef struct
 {
 	DWORD bufferLenght;
-	TCHAR buffer[1000];
+	TCHAR buffer[MAX_BUFFER];
 	TCHAR key[10];
 } encryptionResponseValues;
 typedef struct
@@ -70,6 +71,7 @@ struct workerThreadStructure
 	HANDLE thread;
 	PTCHAR text;
 	PTCHAR key;
+	DWORD keyStartPosition;
 	int isRunning;
 	int hasFinished;
 	int canBeReused;

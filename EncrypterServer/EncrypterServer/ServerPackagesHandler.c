@@ -19,7 +19,7 @@ DWORD WINAPI EncryptText(PVOID workerThreadSt)
 {
 	workerThreadStruc *workerThreadS = workerThreadSt;
 	workerThreadS->isRunning = 1;
-	encrypt(workerThreadS->text, workerThreadS->key);
+	encrypt(workerThreadS->text, workerThreadS->key,workerThreadS->keyStartPosition);
 	workerThreadS->isRunning = 0;
 	workerThreadS->canBeReused = 0;
 	workerThreadS->hasFinished = 1;
@@ -147,10 +147,12 @@ void clientAuthenticated(package *pack, HANDLE responsePipe)
 void printOpenedConnections()
 {
 	threadStruc *tSCurrent = firstThread;
+	_tprintf(TEXT("Threads list:\n"));
 	do
 	{
-		_tprintf(" %d \n", tSCurrent->dThreadId);
-		tSCurrent = tSCurrent->next;
+		_tprintf(TEXT("thread with number %d is running:%d has finished:%d \n"), tSCurrent->dThreadId,tSCurrent->isRunning,tSCurrent->hasFinished);
+		if(tSCurrent->next!=NULL)
+			tSCurrent = tSCurrent->next;
 	} while (tSCurrent->next != NULL);
 }
 int isServerRunning()
@@ -195,11 +197,13 @@ threadStruc *getAvailableThread()
 	if (firstThread->hasFinished)
 	{
 		threadStruc *threadSRe = firstThread;
-		firstThread = firstThread->next;
+		if(firstThread->next!=NULL)
+			firstThread = firstThread->next;
 		CloseHandle(threadSRe->thread);
 		createThreadForConnection(threadSRe);
 		threadSRe->next = NULL;
-		getLastThreadS(firstThread)->next = threadSRe;
+		if (firstThread->next != NULL)
+			getLastThreadS(firstThread)->next = threadSRe;
 	}
 	threadStruc *threadS = firstThread;
 	while (threadS != NULL)
@@ -276,6 +280,7 @@ void encryptPackage(PTCHAR text, PTCHAR key)
 			}
 		} while (workers[dCurrentSegment] == NULL);
 		workers[dCurrentSegment]->isRunning = 1;
+		workers[dCurrentSegment]->keyStartPosition = i%_tcslen(key);
 		ReleaseMutex(workerThreadMutex);
 		textSegments[dCurrentSegment] = malloc(LENGHT_PER_WORKER * sizeof(TCHAR));
 		_tcsncpy(textSegments[dCurrentSegment],text+ dCurrentSegment, LENGHT_PER_WORKER);

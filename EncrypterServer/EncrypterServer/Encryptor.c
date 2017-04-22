@@ -3,11 +3,12 @@ PTCHAR getEncryptionKey()
 {
 	return TEXT("aaa");
 }
-PTCHAR encrypt(PTCHAR text, PTCHAR key)
+PTCHAR encrypt(PTCHAR text, PTCHAR key, DWORD keyPosition)
 {
 	_tcscpy(key, getEncryptionKey());
-	int intPositionOnKey = 0;
+	int intPositionOnKey = keyPosition;
 	int intKeyLenght = _tcslen(key);
+	intPositionOnKey %= intKeyLenght;
 	for (int i = 0; i < _tcslen(text); i++)
 	{
 		text[i]=text[i]^ key[intPositionOnKey];

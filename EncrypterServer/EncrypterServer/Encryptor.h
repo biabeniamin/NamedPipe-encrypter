@@ -2,4 +2,4 @@
 #include <stdio.h> 
 #include <tchar.h>
 PTCHAR
-encrypt(PTCHAR text,PTCHAR key);
+encrypt(PTCHAR text,PTCHAR key,DWORD keyPosition);
