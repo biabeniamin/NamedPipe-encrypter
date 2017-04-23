@@ -49,7 +49,7 @@ void sendPackage(DWORD start)
 	dKeyLenght = _tcslen(ptKey);
 	lenght = _tcslen(ptText);
 	_tcsncpy(data.buffer, ptText + start, MAX_BUFFER);
-	data.buffer[start + MAX_BUFFER] = '\0';
+	data.buffer[ MAX_BUFFER] = '\0';
 	//sync key with text
 	dKeyPosition = start % (_tcslen(ptKey));
 	_tcscpy(data.key, ptKey + dKeyPosition);

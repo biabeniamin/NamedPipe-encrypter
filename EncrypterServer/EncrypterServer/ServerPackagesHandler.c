@@ -285,10 +285,11 @@ void encryptPackage(PTCHAR text, PTCHAR key)
 	workerThreadStruc **workers;
 	DWORD dCurrentSegment;
 	DWORD dTextLenght = _tcslen(text);
+	DWORD workersCount=0;
 	WaitForSingleObject(workerThreadMutex,
 		INFINITE);
 	//divide buffer per workers
-	dNrOfTextSegments = dTextLenght / LENGHT_PER_WORKER;
+	dNrOfTextSegments = dTextLenght / LENGHT_PER_WORKER+1;
 	workers = malloc(dNrOfTextSegments * sizeof(workerThreadStruc*));
 	textSegments = malloc(dNrOfTextSegments * sizeof(PTCHAR));
 	for (int i = 0; i < dTextLenght; i += LENGHT_PER_WORKER)
@@ -299,6 +300,7 @@ void encryptPackage(PTCHAR text, PTCHAR key)
 			TEXT("worker"));
 		do
 		{
+			workersCount++;
 			workers[dCurrentSegment] = getAvailableWorkerThread();
 			for (int j = 0; j < dCurrentSegment; j++)
 			{
@@ -315,14 +317,14 @@ void encryptPackage(PTCHAR text, PTCHAR key)
 		workers[dCurrentSegment]->isRunning = 1;
 		workers[dCurrentSegment]->keyStartPosition = i%_tcslen(key);
 		ReleaseMutex(workerThreadMutex);
-		textSegments[dCurrentSegment] = malloc((LENGHT_PER_WORKER+5) * sizeof(TCHAR));
+		textSegments[dCurrentSegment] = malloc((LENGHT_PER_WORKER*5) * sizeof(TCHAR));
 		textSegments[dCurrentSegment][LENGHT_PER_WORKER] = '\0';
 		_tcsncpy(textSegments[dCurrentSegment],text+ dCurrentSegment*LENGHT_PER_WORKER, LENGHT_PER_WORKER);
 		workers[dCurrentSegment]->text = textSegments[dCurrentSegment];
 		workers[dCurrentSegment]->key = key;
 		ResumeThread(workers[dCurrentSegment]->thread);
 	}
-	for (int i = 0; i < MIN(dMaxWorkers, dTextLenght / LENGHT_PER_WORKER + 1); i++)
+	for (int i = 0; i < workersCount; i++)
 	{
 		if (workers[i]->hasFinished == 0)
 			WaitForSingleObject(workers[i]->thread, INFINITE);
@@ -338,10 +340,10 @@ void encryptPackage(PTCHAR text, PTCHAR key)
 		createThreadForWorker(workers[i]);
 		//free(textSegments[i]);
 	}
-	for (int i = 0; i < MIN(dMaxWorkers, dTextLenght / LENGHT_PER_WORKER + 1); i++)
+	for (int i = 0; i < workersCount; i++)
 	{
-		textSegments[i][5] = '\0';
-		free(textSegments[i]);
+		//textSegments[i][5] = '\0';
+		//free(textSegments[i]);
 	}
 	//free(textSegments);
 	//free(workers);

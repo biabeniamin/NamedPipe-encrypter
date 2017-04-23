@@ -2,14 +2,14 @@
 HANDLE _file=NULL;
 void initializing()
 {
-	if(_file==NULL || _file ==INFINITE)
+	/*if(_file==NULL || _file ==INFINITE)
 		_file = CreateFile(TEXT("log.txt"),
 			GENERIC_WRITE,
 			FILE_SHARE_READ,
 			NULL,
 			CREATE_NEW,
 			FILE_ATTRIBUTE_NORMAL,
-			NULL);
+			NULL);*/
 }
 void logWrite(LPCVOID buffer, DWORD dSize)
 {
@@ -34,17 +34,17 @@ void logWriteNr(DWORD buffer, DWORD dSize)
 }
 void logWriteLine(PTCHAR text)
 {
-	logWrite(text, _tcslen(text));
+	//logWrite(text, _tcslen(text));
 	_tprintf(TEXT("%s\n"), text);
 }
 void logWriteNumber(DWORD dNr)
 {
-	logWriteNr(dNr, sizeof(DWORD));
+	//logWriteNr(dNr, sizeof(DWORD));
 	_tprintf(TEXT("%d "), dNr);
 }
 void logWriteWord(PTCHAR word)
 {
-	logWrite(word, _tcslen(word));
+	//logWrite(word, _tcslen(word));
 	_tprintf(TEXT("%s "), word);
 }
 void logNewLine()

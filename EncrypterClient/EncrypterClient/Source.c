@@ -9,14 +9,12 @@ int main()
 	_tcscpy(text, TEXT("bla bla bla"));
 	for (int i = 0; i < 50000; i++)
 	{
-		if(i<5000)
 			text[i] = 'a';
-		else
-			text[i] = 'b';
-	
+			text[i] += i / 5000;
 	}
 	text[1] = 'b';
-	text[20001] = '\0';
+	text[49000] = '\0';
 	encrypt(TEXT("username"), TEXT("password"), text,TEXT("123"));
+	_tprintf(TEXT("final text:%s"), text);
 	return (0);
 }
