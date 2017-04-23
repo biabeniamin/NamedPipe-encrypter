@@ -1,11 +1,10 @@
 #ifndef TYPES_H_INCLUDED
 #define TYPES_H_INCLUDED
 #include "Log.h"
-#define LENGHT_PER_WORKER 5000
-#define MAX_BUFFER_SIZE 5000
+#define LENGHT_PER_WORKER 100
+#define MAX_BUFFER 1000
 #define SECONDS_TIMEOUT 5
 #define MIN(a,b) ((a)<(b)?(a):(b))
-#define MAX_BUFFER MIN(MAX_BUFFER_SIZE,LENGHT_PER_WORKER)
 typedef enum
 {
 	initializing = 0,

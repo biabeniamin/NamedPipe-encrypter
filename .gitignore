@@ -18,3 +18,5 @@ EncrypterServer/EncrypterServer/EncrypterServer.vcxproj.filters
 EncrypterServer/EncrypterServer/log.txt
 EncrypterServer/.vs/
 ToDo.txt
+EncrypterClient/EncrypterClient/input.txt
+EncrypterClient/EncrypterClient/output.txt
