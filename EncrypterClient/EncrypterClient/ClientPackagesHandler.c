@@ -7,7 +7,7 @@ PTCHAR ptKey;
 void initializingCommunication()
 {
 	h = initializingPipeAsClient(TEXT("\\\\.\\pipe\\Pipe"));
-	response = initializingPipeAsServer(TEXT("\\\\.\\pipe\\PipeA"));
+	response = initializingPipeAsServer(TEXT("\\\\.\\pipe\\PipeA"),INFINITE);
 	ConnectNamedPipe(response,NULL);
 	isOpen = 1;
 }
@@ -75,6 +75,7 @@ void encryptData(PTCHAR text,PTCHAR key)
 			waitAnswer(response, &packageReceived);
 		}
 	}
+	Sleep(30000);
 }
 void closeCommunication()
 {
@@ -116,7 +117,7 @@ int packageReceived(package *pack)
 		if (authResponseValues->isSuccessful)
 		{
 			h = initializingPipeAsClient(authResponseValues->serverPipename);
-			response = initializingPipeAsServer(authResponseValues->clientPipename);
+			response = initializingPipeAsServer(authResponseValues->clientPipename,INFINITE);
 			ConnectNamedPipe(response, NULL);
 			
 		}

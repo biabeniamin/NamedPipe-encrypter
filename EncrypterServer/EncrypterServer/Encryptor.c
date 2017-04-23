@@ -7,8 +7,9 @@ PTCHAR encrypt(PTCHAR text, PTCHAR key, DWORD keyPosition)
 {
 	int intPositionOnKey = keyPosition;
 	int intKeyLenght = _tcslen(key);
+	DWORD dTestLenght= _tcslen(text);
 	intPositionOnKey %= intKeyLenght;
-	for (int i = 0; i < _tcslen(text); i++)
+	for (DWORD i = 0; i < dTestLenght; i++)
 	{
 		text[i]=text[i]^ key[intPositionOnKey];
 		intPositionOnKey++;

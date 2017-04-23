@@ -14,8 +14,8 @@ int main()
 		else
 			text[i] = 'b';
 	}
-	//text[1] = 'b';
+	text[1] = 'b';
 	text[8999] = '\0';
-	encrypt(TEXT("username"), TEXT("password"), text,TEXT("abc"));
+	encrypt(TEXT("username"), TEXT("password"), text,TEXT("123"));
 	return (0);
 }

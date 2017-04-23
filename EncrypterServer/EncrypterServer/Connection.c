@@ -42,7 +42,7 @@ void writePackage(HANDLE hPipe, package *pack)
 		&dwWritten,
 		NULL);
 }
-HANDLE initializingPipeAsServer(PTCHAR pipeName)
+HANDLE initializingPipeAsServer(PTCHAR pipeName,DWORD dTimeout)
 {
 	HANDLE hPipe;
 	hPipe = CreateNamedPipe(pipeName,
@@ -51,7 +51,7 @@ HANDLE initializingPipeAsServer(PTCHAR pipeName)
 		1,
 		1024 * 16,
 		1024 * 16,
-		NMPWAIT_USE_DEFAULT_WAIT,
+		dTimeout,
 		NULL);
 	DWORD error = GetLastError();
 	return hPipe;

@@ -1,6 +1,4 @@
 stopflag stop server,not just refuse accepting connections
-list,exit command
-data as packets
-send us big packets separated
+exit command
 users from file
-timeout
+small buffer

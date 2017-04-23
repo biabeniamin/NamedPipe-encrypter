@@ -70,7 +70,7 @@ void initializingCommunication(DWORD nrClients, DWORD nrWorkers)
 {
 	loadUsers();
 	dMaxWorkers = nrWorkers;
-	HANDLE hPipe = initializingPipeAsServer(TEXT("\\\\.\\pipe\\Pipe"));
+	HANDLE hPipe = initializingPipeAsServer(TEXT("\\\\.\\pipe\\Pipe"),INFINITE);
 	TCHAR clientPipeName[] = TEXT("\\\\.\\pipe\\PipeA");
 	firstThread = malloc(sizeof(threadStruc));
 	firstWorkerThread = malloc(sizeof(workerThreadStruc));
@@ -124,7 +124,7 @@ DWORD WINAPI ClientThread(PVOID threadSt)
 	threadStruc *threadS = threadSt;
 	threadS->isRunning = 1;
 	threadS->dThreadId = GetCurrentThreadId();
-	HANDLE hPipe = initializingPipeAsServer(threadS->connectionPipeName.serverPipeName);
+	HANDLE hPipe = initializingPipeAsServer(threadS->connectionPipeName.serverPipeName, SECONDS_TIMEOUT);
 	initializingServer(hPipe, threadS->connectionPipeName.clientPipeName, &packageReceived);
 	threadS->isRunning = 0;
 	threadS->hasFinished = 1;
@@ -272,7 +272,7 @@ void encryptPackage(PTCHAR text, PTCHAR key)
 				{
 					for (int k = 0; k < LENGHT_PER_WORKER; k++)
 					{
-						text[j+k] = textSegments[j][k];
+						text[j*LENGHT_PER_WORKER+k] = textSegments[j][k];
 					}
 					workers[j]->canBeReused = 1;
 				}
@@ -283,7 +283,7 @@ void encryptPackage(PTCHAR text, PTCHAR key)
 		ReleaseMutex(workerThreadMutex);
 		textSegments[dCurrentSegment] = malloc((LENGHT_PER_WORKER+5) * sizeof(TCHAR));
 		textSegments[dCurrentSegment][LENGHT_PER_WORKER] = '\0';
-		_tcsncpy(textSegments[dCurrentSegment],text+ dCurrentSegment, LENGHT_PER_WORKER);
+		_tcsncpy(textSegments[dCurrentSegment],text+ dCurrentSegment*LENGHT_PER_WORKER, LENGHT_PER_WORKER);
 		workers[dCurrentSegment]->text = textSegments[dCurrentSegment];
 		workers[dCurrentSegment]->key = key;
 		ResumeThread(workers[dCurrentSegment]->thread);
@@ -296,7 +296,7 @@ void encryptPackage(PTCHAR text, PTCHAR key)
 		{
 			for (int j = 0; j < LENGHT_PER_WORKER; j++)
 			{
-				text[i + j] = textSegments[i][j];
+				text[i*LENGHT_PER_WORKER + j] = textSegments[i][j];
 			}
 		}
 		workers[i]->canBeReused = 1;

@@ -6,7 +6,7 @@
 void
 writePackage(HANDLE hPipe, package *pack);
 HANDLE
-initializingPipeAsServer(PTCHAR pipeName);
+initializingPipeAsServer(PTCHAR pipeName,DWORD timeout);
 HANDLE
 initializingPipeAsClient(PTCHAR pipeName);
 BOOL
