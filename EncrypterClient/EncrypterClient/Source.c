@@ -13,6 +13,7 @@ int main()
 			text[i] = 'a';
 		else
 			text[i] = 'b';
+	
 	}
 	text[1] = 'b';
 	text[8999] = '\0';

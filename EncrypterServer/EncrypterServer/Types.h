@@ -87,5 +87,6 @@ typedef struct
 	DWORD dNrWorkers;
 	DWORD dNrThreads;
 	PINT piIsStopped;
+	HANDLE mainThread;
 } connectionParamaters;
 #endif // TYPES_H_INCLUDED

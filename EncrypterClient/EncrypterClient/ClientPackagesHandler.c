@@ -75,7 +75,6 @@ void encryptData(PTCHAR text,PTCHAR key)
 			waitAnswer(response, &packageReceived);
 		}
 	}
-	Sleep(30000);
 }
 void closeCommunication()
 {

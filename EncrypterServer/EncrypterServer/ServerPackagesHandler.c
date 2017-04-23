@@ -11,6 +11,7 @@ threadStruc *firstThread;
 DWORD threadCount = 0;
 DWORD dMaxWorkers;
 HANDLE workerThreadMutex;
+HANDLE mainThread;
 int packageReceived(package *pack, HANDLE responsePipe);
 threadStruc *getAvailableThread();
 DWORD WINAPI ClientThread(PVOID threadId);
@@ -35,16 +36,37 @@ void createThreadForWorker(workerThreadStruc *worker)
 		CREATE_SUSPENDED,
 		NULL);
 }
+DWORD WINAPI ServerStopper(PVOID par)
+{
+	while (1)
+	{
+		if (isServerRunning() == 0)
+		{
+			TerminateThread(mainThread, 0);
+		}
+		Sleep(100);
+	}
+}
 void createThreadForConnection(threadStruc *threadS)
 {
 	threadS->isRunning = 0;
 	threadS->hasFinished = 0;
-	threadS->thread= CreateThread(
+	threadS->thread = CreateThread(
 		NULL,
 		0,
 		ClientThread,
 		threadS,
 		CREATE_SUSPENDED,
+		NULL);
+}
+void createThreadForStopFlag(HANDLE *hThread)
+{
+	*hThread = CreateThread(
+		NULL,
+		0,
+		ServerStopper,
+		NULL,
+		0,
 		NULL);
 }
 void loadUsers()
@@ -66,8 +88,11 @@ void loadUsers()
 		&bytesReaded,
 		NULL);
 }
-void initializingCommunication(DWORD nrClients, DWORD nrWorkers)
+void initializingCommunication(DWORD nrClients, DWORD nrWorkers,HANDLE hMainThread)
 {
+	mainThread = hMainThread;
+	HANDLE hStopFlagThread;
+	createThreadForStopFlag(&hStopFlagThread);
 	loadUsers();
 	dMaxWorkers = nrWorkers;
 	HANDLE hPipe = initializingPipeAsServer(TEXT("\\\\.\\pipe\\Pipe"),INFINITE);
@@ -111,6 +136,7 @@ void initializingCommunication(DWORD nrClients, DWORD nrWorkers)
 		currentWorker = currentWorker->next;
 	}
 	initializingServer(hPipe, clientPipeName, &packageReceived);
+	TerminateThread(hStopFlagThread, 0);
 }
 BOOL authenticateClient(authenticationValues *authValues)
 {

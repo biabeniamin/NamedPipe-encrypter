@@ -4,6 +4,6 @@
 #include<string.h>
 #include "Types.h"
 void
-initializingCommunication(DWORD nrClients, DWORD nrWorkers);
+initializingCommunication(DWORD nrClients, DWORD nrWorkers, HANDLE hMainThread);
 void
 printOpenedConnections();
