@@ -1,4 +1,0 @@
-stopflag stop server,not just refuse accepting connections
-exit command
-users from file
-small buffer

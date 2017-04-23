@@ -42,6 +42,14 @@ DWORD WINAPI ServerStopper(PVOID par)
 	{
 		if (isServerRunning() == 0)
 		{
+			threadStruc *current = firstThread;
+			do
+			{
+				if (current->isRunning == 1)
+					WaitForSingleObject(current->thread, 10000);
+				if(current->next!=NULL)
+					current = current->next;
+			} while (current->next != NULL);
 			TerminateThread(mainThread, 0);
 		}
 		Sleep(100);
