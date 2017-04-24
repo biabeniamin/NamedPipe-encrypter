@@ -326,7 +326,7 @@ void encryptPackage(PTCHAR text, PTCHAR key)
 	}
 	for (int i = 0; i < workersCount; i++)
 	{
-		if (workers[i]->hasFinished == 0)
+		if (workers[i]->isRunning == 1 && workers[i]->hasFinished == 0)
 			WaitForSingleObject(workers[i]->thread, INFINITE);
 		if (workers[i]->hasFinished && workers[i]->canBeReused == 0)
 		{
@@ -339,11 +339,7 @@ void encryptPackage(PTCHAR text, PTCHAR key)
 		CloseHandle(workers[i]->thread);
 		createThreadForWorker(workers[i]);
 		//free(textSegments[i]);
-	}
-	for (int i = 0; i < workersCount; i++)
-	{
-		//textSegments[i][5] = '\0';
-		//free(textSegments[i]);
+
 	}
 	//free(textSegments);
 	//free(workers);
