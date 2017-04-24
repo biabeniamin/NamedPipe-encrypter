@@ -73,7 +73,7 @@ int main(void)
 			break;
 		}
 	}
-
+	//wait server to finish
 	WaitForSingleObject(hServer, INFINITE);
 	return 0;
 }
