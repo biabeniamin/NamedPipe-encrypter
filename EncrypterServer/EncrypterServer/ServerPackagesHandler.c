@@ -12,6 +12,8 @@ DWORD threadCount = 0;
 DWORD dMaxWorkers;
 HANDLE workerThreadMutex;
 HANDLE mainThread;
+authCredential authCredentials[10];
+DWORD authCrendentialsCount;
 int packageReceived(package *pack, HANDLE responsePipe);
 threadStruc *getAvailableThread();
 DWORD WINAPI ClientThread(PVOID threadId);
@@ -93,22 +95,55 @@ void createThreadForStopFlag(HANDLE *hThread)
 }
 void loadUsers()
 {
+	TCHAR buffer[500];// = TEXT("username password;root adm;;");
 	TCHAR user[100];
 	TCHAR password[100];
 	DWORD bytesReaded;
+	int last;
+	int lastSpace;
 	//_tcscpy(user,)
 	HANDLE usersFile = CreateFile(TEXT("users.txt"),
-		GENERIC_READ,
+		GENERIC_READ | GENERIC_WRITE,
 		FILE_SHARE_READ,
 		NULL,
 		OPEN_EXISTING,
 		FILE_ATTRIBUTE_NORMAL,
 		NULL);
+	if (usersFile == NULL)
+		logWriteLine(TEXT("Cannot open credentials file!Default credentials were loaded!"));
+	//WriteFile(usersFile, buffer, 500, &bytesReaded, NULL);
 	ReadFile(usersFile,
-		user,
-		100,
+		buffer,
+		500,
 		&bytesReaded,
 		NULL);
+	last = 0;
+	if (bytesReaded == 0)
+	{
+		_tcscpy(authCredentials[authCrendentialsCount].username, TEXT("username"));
+		_tcscpy(authCredentials[authCrendentialsCount].password, TEXT("password"));
+		authCrendentialsCount++;
+	}
+	for (int i = 0; i < MIN(_tcslen(buffer),bytesReaded); i++)
+	{
+		if (buffer[i] == ';')
+		{
+			if (last == i)
+				break;
+			_tcsncpy(password, buffer + lastSpace, i - lastSpace);
+			password[i - lastSpace] = '\0';
+			_tcscpy(authCredentials[authCrendentialsCount].username, user);
+			_tcscpy(authCredentials[authCrendentialsCount].password, password);
+			authCrendentialsCount++;
+			last = i+1;
+		}
+		if (buffer[i] == ' ')
+		{
+			_tcsncpy(user, buffer + last,i-last);
+			user[i - last] = '\0';
+			lastSpace = i+1;
+		}
+	}
 }
 void initializingCommunication(DWORD nrClients, DWORD nrWorkers,HANDLE hMainThread)
 {
@@ -177,9 +212,12 @@ void initializingCommunication(DWORD nrClients, DWORD nrWorkers,HANDLE hMainThre
 BOOL authenticateClient(authenticationValues *authValues)
 {
 	//authenticate client
-	if (_tccmp(authValues->username, TEXT("username")) == 0
-		&& _tccmp(authValues->password, TEXT("password")) == 0)
-		return TRUE;
+	for (int i = 0; i < authCrendentialsCount; i++)
+	{
+		if (_tccmp(authValues->username, authCredentials[i].username) == 0
+			&& _tccmp(authValues->password, authCredentials[i].password) == 0)
+			return TRUE;
+	}
 	return FALSE;
 }
 DWORD WINAPI ClientThread(PVOID threadSt)
@@ -373,8 +411,6 @@ void encryptPackage(PTCHAR text, PTCHAR key)
 			TEXT("worker"));
 		do
 		{
-			//increment workers
-			workersCount++;
 			//get an available worker
 			workers[dCurrentSegment] = getAvailableWorkerThread();
 			//walk through all workers
@@ -393,6 +429,8 @@ void encryptPackage(PTCHAR text, PTCHAR key)
 			}
 			//repet if no worker was founded
 		} while (workers[dCurrentSegment] == NULL);
+		//increment workers
+		workersCount++;
 		//set worker as running
 		workers[dCurrentSegment]->isRunning = 1;
 		//set position on key,because text is divided in pieces and key must be sync
@@ -450,7 +488,7 @@ int packageReceived(package *pack,HANDLE responsePipe)
 	encryptionValues *encValues;
 	encryptionResponseValues encResponseValues;
 	package packageToBeSend;
-	
+	authenticationResponseValues authResponseValues;
 	//HANDLE responsePipe = initializingPipeAsClient(TEXT("\\\\.\\pipe\\PipeA"));
 	//case request type
 	switch (pack->type)
@@ -493,12 +531,12 @@ int packageReceived(package *pack,HANDLE responsePipe)
 			//authentication failed
 			logWriteLine(TEXT("Invalid credentials!\n"));
 			packageToBeSend.type = authenticationResponse;
-			requestAnswerVal.isSuccesful = FALSE;
-			_tcscpy(requestAnswerVal.buffer, TEXT("not OK"));
-			packageToBeSend.buffer = &requestAnswerVal;
+			authResponseValues.isSuccessful = FALSE;
+			_tcscpy(authResponseValues.serverPipename, TEXT("as"));
+			_tcscpy(authResponseValues.clientPipename, TEXT("as"));
+			packageToBeSend.buffer = &authResponseValues;
 			//response to client
 			writePackage(responsePipe, &packageToBeSend);
-			return 1;
 		}
 		break;
 	case encryption:

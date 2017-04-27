@@ -104,4 +104,10 @@ typedef struct
 	PINT piIsStopped;
 	HANDLE mainThread;
 } connectionParamaters;
+//struct to store authentication info
+typedef struct
+{
+	TCHAR username[50];
+	TCHAR password[50];
+} authCredential;
 #endif // TYPES_H_INCLUDED

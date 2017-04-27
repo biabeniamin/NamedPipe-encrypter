@@ -11,6 +11,11 @@ void initializingCommunication()
 	response = initializingPipeAsServer(TEXT("\\\\.\\pipe\\PipeA"),INFINITE);
 	//connect to pipe
 	ConnectNamedPipe(response,NULL);
+	if (h != NULL)
+	{
+		_tprintf(TEXT("Connection cannot be established!"));
+		isOpen = 0;
+	}
 	isOpen = 1;
 }
 void initializingConnection()
@@ -153,7 +158,11 @@ int packageReceived(package *pack)
 		}
 		//otherwise close server
 		else
+		{
+			_tprintf(TEXT("Invalid credentials!"));
+			isOpen = 0;
 			return 1;
+		}
 		break;
 	case encryptionResponse:
 		//new encryption respose received

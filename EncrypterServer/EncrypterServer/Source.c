@@ -38,14 +38,19 @@ int main(void)
 	//set stop flag to 1
 	writeToFlagFile(TEXT("0"));
 	HANDLE hServer; 
-	logWriteLine(TEXT("dfhdf"));
 	connectionParamaters con;
 	con.dNrThreads = 3;
 	con.dNrWorkers = 1000;
-	/*_tprintf(TEXT("number of threads for clients:"));
+	_tprintf(TEXT("number of threads for clients:"));
 	_tscanf(TEXT("%d"), &con.dNrThreads);
 	_tprintf(TEXT("number of workers:"));
-	_tscanf(TEXT("%d"), &con.dNrWorkers);*/
+	_tscanf(TEXT("%d"), &con.dNrWorkers);
+	//check parameters
+	if (con.dNrThreads < 1 || con.dNrWorkers < 1 || con.dNrThreads > 10000 || con.dNrWorkers >100000)
+	{
+		logWriteLine(TEXT("invalid arguments!"));
+		return;
+	}
 	//create thread for server
 	hServer = CreateThread(NULL,
 		0,
